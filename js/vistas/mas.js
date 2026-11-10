@@ -2,7 +2,25 @@
 // "Más": perfil, cuenta, proveedores, categorías, unidades y respaldo.
 // =====================================================================
 import { db, guardar, nuevoId, hoy, buscar, reemplazarTodo, esRespaldoValido, semilla, OCUPACIONES } from "../datos.js";
-import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero } from "../ui.js";
+import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero, aplicarApariencia } from "../ui.js";
+
+// Tarjeta de apariencia: tema y modo obra.
+function tarjetaApariencia() {
+  const tema = db.perfil.tema || "auto";
+  const op = (v, t) => `<option value="${v}" ${tema === v ? "selected" : ""}>${t}</option>`;
+  return `
+    <section class="tarjeta">
+      <h3>🔆 Apariencia</h3>
+      <form data-form="apariencia" class="formulario">
+        <label class="ancho">Tema
+          <select name="tema">${op("auto", "Automático (como el celular)")}${op("claro", "☀️ Claro: mejor bajo el sol")}${op("oscuro", "🌙 Oscuro")}</select>
+        </label>
+        <label class="ancho check"><input type="checkbox" name="modoObra" ${db.perfil.modoObra ? "checked" : ""}>
+          👷 Modo obra: letra grande, más contraste y botones más grandes</label>
+        <button class="principal ancho">Aplicar</button>
+      </form>
+    </section>`;
+}
 import { VERSION_APP, SOPORTE } from "../config.js";
 
 // Tarjeta de moneda: colones o dólares + tipo de cambio.
@@ -139,6 +157,8 @@ export const vistaMas = {
 
       ${tarjetaMoneda()}
 
+      ${tarjetaApariencia()}
+
       <section class="tarjeta">
         <h3>👷 Tu perfil</h3>
         <form data-form="perfil" class="formulario">
@@ -194,6 +214,15 @@ export const vistaMas = {
   },
 
   formularios: {
+    apariencia(form, d) {
+      db.perfil.tema = ["claro", "oscuro"].includes(d.tema) ? d.tema : "auto";
+      db.perfil.modoObra = Boolean(d.modoObra);
+      guardar();
+      aplicarApariencia();
+      refrescar();
+      aviso("Apariencia aplicada ✓");
+    },
+
     moneda(form, d) {
       db.perfil.moneda = d.moneda === "USD" ? "USD" : "CRC";
       db.perfil.tipoCambio = Number(d.tipoCambio) > 0 ? Number(d.tipoCambio) : tipoCambio();

@@ -3,8 +3,10 @@
 // =====================================================================
 import {
   db, guardar, nuevoId, hoy, buscar, categoria, unidad, totalesLista,
-  asegurarCategoria, asegurarUnidad, proveedorPorNombre, quienSoy, OCUPACIONES,
+  asegurarCategoria, asegurarUnidad, proveedorPorNombre, quienSoy, OCUPACIONES, agregarALista,
 } from "../datos.js";
+import { PLANTILLAS, plantillasPara, materialesDe } from "../plantillas.js";
+import { vozDisponible, escuchar, interpretar } from "../voz.js";
 import {
   $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir,
   simbolo, aMoneda, aColones, precioEditado,
@@ -27,6 +29,11 @@ export const vistaListas = {
       : `<p class="nota"><a href="#/mas">Completa tu perfil</a> con tu nombre y ocupación.</p>`;
     return `
       ${saludo}
+      <a class="atajo" href="#/calculadoras">
+        <span class="calc-icono">🧮</span>
+        <span><strong>Calculadoras de obra</strong><span class="nota">Concreto, block, repello, pintura, piso y cable</span></span>
+        <span aria-hidden="true">›</span>
+      </a>
       <div class="encabezado">
         <h2>Mis listas de obra</h2>
         <button class="principal" data-accion="nueva">+ Nueva lista</button>
@@ -61,8 +68,14 @@ export const vistaListas = {
           { nombre: "presupuesto", etiqueta: `Presupuesto máximo (${simbolo()})`, tipo: "number", valor: "" },
           { nombre: "direccion", etiqueta: "Dirección", ancho: true },
           {
-            nombre: "plantilla", etiqueta: "Copiar materiales de otra lista", tipo: "select", ancho: true,
-            opciones: [{ valor: "", texto: "— Empezar en blanco —" }, ...db.listas.map((l) => ({ valor: l.id, texto: l.nombre }))],
+            nombre: "plantilla", etiqueta: "Empezar con", tipo: "select", ancho: true,
+            opciones: [
+              { valor: "", texto: "— Lista en blanco —" },
+              // plantillas de trabajos típicos (las de tu oficio primero)
+              ...plantillasPara(db.perfil.ocupacion).map((p) => ({ valor: `plantilla:${p.id}`, texto: `📋 ${p.titulo}` })),
+              // o copiar los materiales de una lista tuya
+              ...db.listas.map((l) => ({ valor: l.id, texto: `📄 Copiar de: ${l.nombre}` })),
+            ],
           },
         ],
       });
@@ -73,6 +86,8 @@ export const vistaListas = {
         presupuesto: aColones(d.presupuesto), creada: hoy(), archivada: false,
         items: base ? base.items.map((it) => ({ ...it, id: nuevoId(), estado: "pendiente", compraId: undefined })) : [],
       };
+      const plantilla = PLANTILLAS.find((p) => `plantilla:${p.id}` === d.plantilla);
+      if (plantilla) agregarALista(lista, materialesDe(plantilla));
       db.listas.unshift(lista);
       guardar();
       ir(`#/lista/${lista.id}`);
@@ -155,6 +170,7 @@ export const vistaLista = {
       </div>
 
       <div class="acciones-lista">
+        <a class="boton" href="#/calculadoras/${l.id}">🧮 Calcular</a>
         <button data-accion="editar">✏️ Editar</button>
         <button data-accion="compartirTexto">💬 Compartir</button>
         <button data-accion="compartirArchivo">💾 Enviar archivo</button>
@@ -176,8 +192,11 @@ export const vistaLista = {
         <h3>Agregar material</h3>
         <form data-form="agregar" class="formulario">
           <label class="ancho">Material
-            <input name="nombre" list="dl-productos" required autocomplete="off" data-entrada="material"
-                   placeholder="Busca en tu catálogo o escribe uno nuevo">
+            <span class="con-boton">
+              <input name="nombre" list="dl-productos" required autocomplete="off" data-entrada="material"
+                     placeholder="${vozDisponible ? "Escribe, busca o dicta 🎤" : "Busca en tu catálogo o escribe uno nuevo"}">
+              ${vozDisponible ? `<button type="button" class="microfono" data-accion="voz" aria-label="Dictar material" title="Dictar: “10 sacos de cemento”">🎤</button>` : ""}
+            </span>
             <datalist id="dl-productos">${db.productos.map((p) => `<option value="${seguro(p.nombre)}">`).join("")}</datalist>
           </label>
           <label>Categoría<select name="categoriaId">${opcionesDe(db.categorias, null, (c) => `${c.icono} ${c.nombre}`)}</select></label>
@@ -254,6 +273,20 @@ export const vistaLista = {
   },
 
   acciones: {
+    // Dictar un material por voz y llenar el formulario (el usuario confirma con "Agregar").
+    async voz(el) {
+      el.classList.add("escuchando");
+      aviso("🎤 Te escucho… por ejemplo: «10 sacos de cemento»");
+      try {
+        const texto = await escuchar();
+        llenarConVoz(texto);
+      } catch (e) {
+        aviso(e.message);
+      } finally {
+        el.classList.remove("escuchando");
+      }
+    },
+
     async editarItem(el) {
       const it = itemDe(el);
       const d = await formulario({
@@ -407,6 +440,18 @@ export const vistaLista = {
     },
   },
 };
+
+// Pone lo que se dictó en el formulario de "Agregar material".
+export function llenarConVoz(texto) {
+  const f = $('[data-form="agregar"]');
+  if (!f) return;
+  const r = interpretar(texto, db.productos);
+  f.nombre.value = r.producto ? r.producto.nombre : r.resto;
+  if (r.producto) vistaLista.entradas.material(f.nombre); // llena categoría, unidad y precio
+  if (r.cantidad) f.cantidad.value = r.cantidad;
+  aviso(r.producto ? `Escuché «${texto}» ✓ Revisa y toca Agregar` : `Escuché «${texto}». No está en tu catálogo: revisa y toca Agregar`);
+  f.nombre.focus();
+}
 
 function bloquePresupuesto(l, t) {
   if (!(l.presupuesto > 0)) return "";

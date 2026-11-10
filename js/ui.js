@@ -37,6 +37,15 @@ export function dinero(colones) {
     : n.toLocaleString("es-CR", { style: "currency", currency: "CRC", currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 });
 }
 
+// ---------- Apariencia (tema claro/oscuro y modo obra) ----------
+export function aplicarApariencia() {
+  const raiz = document.documentElement;
+  const tema = db.perfil.tema || "auto";
+  if (tema === "auto") delete raiz.dataset.tema;
+  else raiz.dataset.tema = tema;
+  raiz.classList.toggle("modo-obra", Boolean(db.perfil.modoObra));
+}
+
 export function fecha(iso) {
   if (!iso) return "";
   return new Date(iso + "T12:00:00").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });

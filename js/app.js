@@ -9,12 +9,13 @@
 //   entradas       → mientras se escribe, en elementos con data-entrada="..."
 //   formularios    → al enviar un <form data-form="...">
 // =====================================================================
-import { $, alRefrescar } from "./ui.js";
+import { $, alRefrescar, aplicarApariencia } from "./ui.js";
 import { vistaListas, vistaLista } from "./vistas/listas.js";
 import { vistaCatalogo } from "./vistas/catalogo.js";
 import { vistaHistorial } from "./vistas/historial.js";
 import { vistaGastos } from "./vistas/gastos.js";
 import { vistaMas } from "./vistas/mas.js";
+import { vistaCalculadoras } from "./vistas/calculadoras.js";
 import { iniciarInstalacion } from "./instalar.js";
 
 const VISTAS = {
@@ -24,6 +25,7 @@ const VISTAS = {
   historial: vistaHistorial,
   gastos: vistaGastos,
   mas: vistaMas,
+  calculadoras: vistaCalculadoras,
 };
 
 let actual = vistaListas;
@@ -70,6 +72,7 @@ vista.addEventListener("submit", (e) => {
   f(form, Object.fromEntries(new FormData(form)));
 });
 
+aplicarApariencia();
 render();
 
 // ---------- PWA: instalar en el celular (ver instalar.js) ----------

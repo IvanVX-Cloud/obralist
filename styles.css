@@ -11,8 +11,10 @@
   --ok: #2e8b57;
   --carrito: #fff1df;
 }
+/* Tema oscuro: automático según el celular, salvo que en ⚙️ Más elijas "Claro".
+   (data-tema lo pone ui.js → aplicarApariencia) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema="claro"]) {
     --fondo: #17181a;
     --tarjeta: #222428;
     --texto: #ecebe8;
@@ -23,6 +25,29 @@
     --ok: #4cb37a;
   }
 }
+:root[data-tema="oscuro"] {
+  --fondo: #17181a;
+  --tarjeta: #222428;
+  --texto: #ecebe8;
+  --suave: #9a9ea6;
+  --borde: #34373c;
+  --carrito: #3a2b18;
+  --peligro: #e5675a;
+  --ok: #4cb37a;
+}
+:root[data-tema="claro"] { color-scheme: light; }
+:root[data-tema="oscuro"] { color-scheme: dark; }
+
+/* Modo obra: letra más grande, más contraste y botones más fáciles de tocar
+   (para usarla bajo el sol o con guantes). */
+:root.modo-obra { font-size: 118%; --suave: #4a4d52; --borde: #b9b2a6; }
+:root.modo-obra[data-tema="oscuro"] { --suave: #c4c8ce; --borde: #5a5e65; }
+@media (prefers-color-scheme: dark) {
+  :root.modo-obra:not([data-tema="claro"]) { --suave: #c4c8ce; --borde: #5a5e65; }
+}
+:root.modo-obra .item input[type="checkbox"] { width: 30px; height: 30px; }
+:root.modo-obra button, :root.modo-obra input:not([type="checkbox"]), :root.modo-obra select { min-height: 46px; }
+:root.modo-obra .tabs a { font-size: .8rem; }
 
 * { box-sizing: border-box; }
 body {
@@ -87,6 +112,26 @@ button.principal { background: var(--acento); color: #1b1300; border: none; font
 button.peligro { color: var(--peligro); }
 .acciones-lista { display: flex; flex-wrap: wrap; gap: 6px; }
 .ancho-total { width: 100%; padding: 12px; }
+/* Campo con botón (micrófono) */
+.con-boton { display: flex; gap: 6px; }
+.con-boton input { flex: 1; }
+.microfono { flex-shrink: 0; padding: 8px 12px; font-size: 1.1rem; }
+.microfono.escuchando { background: var(--peligro); border-color: var(--peligro); animation: latido 1s infinite; }
+@keyframes latido { 50% { transform: scale(1.08); } }
+
+/* Calculadoras */
+.calculadoras { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.calc-opcion { display: grid; gap: 2px; text-align: left; padding: 12px; border-radius: 12px; background: var(--tarjeta); }
+.calc-opcion.activa { border: 2px solid var(--acento); }
+.calc-icono { font-size: 1.5rem; }
+.atajo {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+  background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 16px;
+  color: inherit; text-decoration: none;
+}
+.atajo:hover { border-color: var(--acento); }
+.atajo > span:nth-child(2) { display: grid; }
+.atajo > span:last-child { font-size: 1.5rem; color: var(--suave); }
 .saludo { margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .etiqueta-oficio { font-size: .75rem; font-weight: 600; color: var(--acento); border: 1px solid var(--acento); padding: 2px 10px; border-radius: 99px; }
 a.boton { display: inline-block; text-decoration: none; font: inherit; font-size: .85rem; color: var(--texto); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--borde); }

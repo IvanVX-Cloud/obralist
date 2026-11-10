@@ -264,6 +264,28 @@ export function proveedorPorNombre(nombre) {
   return p.id;
 }
 
+// Agrega varios materiales a una lista (lo usan las calculadoras y las plantillas).
+// materiales: [{ nombre, cantidad, categoria, unidad }]. Si el material está en el
+// catálogo, toma de ahí su categoría, unidad y precio. Si ya está pendiente en la
+// lista, suma la cantidad. Devuelve cuántos materiales agregó o actualizó.
+export function agregarALista(lista, materiales) {
+  let n = 0;
+  for (const m of materiales) {
+    if (!(m.cantidad > 0)) continue;
+    const prod = db.productos.find((p) => p.nombre.toLowerCase() === m.nombre.toLowerCase());
+    const existente = lista.items.find((i) => i.estado !== "comprado" && i.nombre.toLowerCase() === m.nombre.toLowerCase());
+    if (existente) existente.cantidad += m.cantidad;
+    else lista.items.push({
+      id: nuevoId(), productoId: prod?.id || null, nombre: prod?.nombre || m.nombre,
+      categoriaId: prod?.categoriaId || asegurarCategoria(m.categoria),
+      unidadId: prod?.unidadId || asegurarUnidad(m.unidad),
+      cantidad: m.cantidad, precio: prod?.precio || 0, estado: "pendiente",
+    });
+    n++;
+  }
+  return n;
+}
+
 // Cuánto lleva cada lista: total, comprado, en carrito y gasto real.
 export function totalesLista(l) {
   let total = 0, comprado = 0, carrito = 0;
