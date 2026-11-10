@@ -35,11 +35,20 @@ body {
 a { color: var(--acento); }
 
 /* ---------- Barra superior ---------- */
-.barra { background: var(--acento); color: #1b1300; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); }
+.barra {
+  background: #1f1a14; color: #fff;
+  padding: 10px 16px; padding-top: max(10px, env(safe-area-inset-top));
+  border-bottom: 3px solid var(--acento);
+}
 .barra-interior { max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.barra h1 { margin: 0; font-size: 1.3rem; }
-.sub { max-width: 860px; margin: 6px auto 0; font-size: .9rem; }
-.instalar { background: #1b1300; color: #fff; border: none; font-weight: 600; }
+.marca { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+.logo { width: 40px; height: 40px; flex-shrink: 0; }
+.marca-texto { display: grid; line-height: 1.1; }
+.marca-nombre { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+.marca-nombre span { color: var(--acento); }
+.marca-lema { font-size: .72rem; color: #c9bfb2; letter-spacing: .02em; }
+.sub { max-width: 860px; margin: 6px auto 0; font-size: .85rem; color: #e9dfd2; }
+.instalar { background: var(--acento); color: #1b1300; border: none; font-weight: 700; }
 [hidden] { display: none !important; }
 
 /* ---------- Estructura ---------- */
@@ -78,6 +87,11 @@ button.principal { background: var(--acento); color: #1b1300; border: none; font
 button.peligro { color: var(--peligro); }
 .acciones-lista { display: flex; flex-wrap: wrap; gap: 6px; }
 .ancho-total { width: 100%; padding: 12px; }
+a.boton { display: inline-block; text-decoration: none; font: inherit; font-size: .85rem; color: var(--texto); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--borde); }
+a.boton:hover { border-color: var(--acento); }
+.pregunta { border-top: 1px solid var(--borde); padding: 10px 0; }
+.pregunta summary { font-weight: 500; }
+.pregunta p { margin: 6px 0 0; }
 .pasos { margin: 0 0 8px; padding-left: 20px; line-height: 1.6; }
 .acciones-lista > * { font-size: .85rem; }
 
@@ -91,8 +105,8 @@ button.peligro { color: var(--peligro); }
 .barra-progreso > div { height: 100%; background: var(--ok); }
 .barra-progreso.pasado > div { background: var(--peligro); }
 .barra-fila { display: grid; grid-template-columns: minmax(90px, 1fr) 2fr auto; gap: 8px; align-items: center; margin: 6px 0; font-size: .9rem; }
-.barra { height: 10px; background: var(--borde); border-radius: 99px; overflow: hidden; }
-.barra > div { height: 100%; background: var(--acento); border-radius: 99px; }
+.barra-grafica { height: 10px; background: var(--borde); border-radius: 99px; overflow: hidden; }
+.barra-grafica > div { height: 100%; background: var(--acento); border-radius: 99px; }
 
 /* ---------- Formularios ---------- */
 .formulario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }

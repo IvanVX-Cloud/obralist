@@ -39,13 +39,55 @@ const CATEGORIAS_BASE = [
 ];
 
 const UNIDADES_BASE = [
-  ["Pieza", "pza"], ["Metro", "m"], ["Metro cuadrado", "m²"], ["Metro cúbico", "m³"],
-  ["Kilogramo", "kg"], ["Bulto", "bulto"], ["Rollo", "rollo"], ["Tramo", "tramo"],
-  ["Litro", "L"], ["Cubeta", "cubeta"], ["Caja", "caja"], ["Juego", "jgo"],
+  ["Unidad", "und"], ["Metro", "m"], ["Metro cuadrado", "m²"], ["Metro cúbico", "m³"],
+  ["Kilogramo", "kg"], ["Saco", "saco"], ["Rollo", "rollo"], ["Tubo / tira", "tubo"],
+  ["Galón", "gal"], ["Cubeta", "cubeta"], ["Caja", "caja"], ["Litro", "L"],
 ];
 
-// [nombre, categoría, unidad, precio de ejemplo]
+// Tipo de cambio inicial (colones por 1 dólar). Se cambia en ⚙️ Más.
+export const TIPO_CAMBIO_INICIAL = 505;
+
+// Catálogo de ejemplo para Costa Rica: [nombre, categoría, unidad, precio en COLONES].
+// Los precios son aproximados; cada quien los ajusta a su ferretería.
 const PRODUCTOS_BASE = [
+  ["Cable THHN #12 (rollo 100 m)", "Eléctrico", "rollo", 42000],
+  ["Cable THHN #14 (rollo 100 m)", "Eléctrico", "rollo", 29000],
+  ["Cable THHN #10 (rollo 100 m)", "Eléctrico", "rollo", 65000],
+  ["Tomacorriente doble", "Eléctrico", "und", 1800],
+  ["Apagador sencillo", "Eléctrico", "und", 1500],
+  ["Placa para toma/apagador", "Eléctrico", "und", 700],
+  ["Centro de carga 4 espacios", "Eléctrico", "und", 16000],
+  ["Breaker 20 A", "Eléctrico", "und", 4500],
+  ["Tubo conduit PVC 1/2\" (3 m)", "Eléctrico", "tubo", 1200],
+  ["Tubo flexible corrugado 1/2\" (rollo 50 m)", "Eléctrico", "rollo", 9500],
+  ["Caja rectangular", "Eléctrico", "und", 350],
+  ["Cinta de aislar", "Eléctrico", "und", 700],
+  ["Bombillo LED 9 W", "Eléctrico", "und", 1200],
+  ["Cemento gris (saco 50 kg)", "Obra negra", "saco", 7500],
+  ["Mortero para pegar block (saco 40 kg)", "Obra negra", "saco", 5200],
+  ["Repello fino (saco 40 kg)", "Obra negra", "saco", 5800],
+  ["Varilla #3 (3/8\") 6 m", "Obra negra", "und", 2800],
+  ["Varilla #4 (1/2\") 6 m", "Obra negra", "und", 4900],
+  ["Alambre negro", "Obra negra", "kg", 1500],
+  ["Block 15x20x40", "Obra negra", "und", 650],
+  ["Block 12x20x40", "Obra negra", "und", 560],
+  ["Arena", "Obra negra", "m³", 18000],
+  ["Piedra quintilla", "Obra negra", "m³", 20000],
+  ["Tubo PVC agua potable 1/2\" (6 m)", "Plomería", "tubo", 2500],
+  ["Codo PVC 1/2\"", "Plomería", "und", 250],
+  ["Llave de paso 1/2\"", "Plomería", "und", 4500],
+  ["Tubo PVC sanitario 4\" (6 m)", "Plomería", "tubo", 14000],
+  ["Pegamento para PVC (1/8 gal)", "Plomería", "und", 3500],
+  ["Pintura látex (cubeta 5 gal)", "Acabados", "cubeta", 55000],
+  ["Piso cerámico", "Acabados", "m²", 6500],
+  ["Pegamento para cerámica (saco 20 kg)", "Acabados", "saco", 5000],
+  ["Fragua (bolsa 2 kg)", "Acabados", "und", 1800],
+  ["Disco de corte 4 1/2\"", "Herramienta", "und", 1200],
+];
+
+// Catálogo de la versión anterior (precios de México). Sólo se usa para
+// reemplazarlo por el de Costa Rica si el usuario no le cambió el precio.
+const PRODUCTOS_ANTERIORES = [
   ["Cable THW calibre 12 (rollo 100 m)", "Eléctrico", "rollo", 1450],
   ["Cable THW calibre 14 (rollo 100 m)", "Eléctrico", "rollo", 980],
   ["Cable THW calibre 10 (rollo 100 m)", "Eléctrico", "rollo", 2300],
@@ -82,7 +124,7 @@ const PRODUCTOS_BASE = [
 
 function vacio() {
   return {
-    version: 2, perfil: { nombre: "" },
+    version: 3, perfil: { nombre: "", moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL },
     categorias: [], unidades: [], productos: [], proveedores: [],
     listas: [], compras: [], gastos: [],
   };
@@ -138,11 +180,35 @@ function migrarV1(v1) {
   return d;
 }
 
+// Versión 2 → 3: adaptar a Costa Rica (moneda, unidades y catálogo).
+function migrarACostaRica(d) {
+  d.perfil = { moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL, ...d.perfil };
+  for (const [nombre, abrev] of UNIDADES_BASE) {
+    if (!d.unidades.some((u) => u.abrev === abrev)) d.unidades.push({ id: nuevoId(), nombre, abrev });
+  }
+  // Quitamos los productos de ejemplo viejos que sigan con su precio original…
+  const viejos = new Map(PRODUCTOS_ANTERIORES.map(([n, , , p]) => [n, p]));
+  d.productos = d.productos.filter((p) => !(viejos.has(p.nombre) && viejos.get(p.nombre) === p.precio));
+  // …y agregamos los de Costa Rica que falten.
+  for (const [nombre, cat, uni, precio] of PRODUCTOS_BASE) {
+    if (!d.productos.some((p) => p.nombre === nombre)) {
+      d.productos.push({ id: nuevoId(), nombre, precio, categoriaId: idCategoria(d, cat), unidadId: idUnidad(d, uni) });
+    }
+  }
+  d.version = 3;
+  return d;
+}
+
+function actualizar(d) {
+  if ((d.version || 2) < 3) migrarACostaRica(d);
+  return d;
+}
+
 // ---------- Cargar y guardar ----------
 function cargar() {
   try {
     const t = localStorage.getItem(CLAVE);
-    if (t) return { ...vacio(), ...JSON.parse(t) };
+    if (t) return actualizar({ ...vacio(), ...JSON.parse(t), version: JSON.parse(t).version || 2 });
     const v1 = localStorage.getItem(CLAVE_V1);
     if (v1) return migrarV1(JSON.parse(v1));
   } catch (e) { console.warn("No se pudieron leer los datos guardados", e); }
@@ -157,8 +223,10 @@ export function guardar() {
   catch (e) { console.warn("No se pudo guardar", e); }
 }
 
+guardar(); // guarda de una vez si hubo actualización de versión al cargar
+
 export function reemplazarTodo(nuevo) {
-  db = { ...vacio(), ...nuevo };
+  db = actualizar({ ...vacio(), ...nuevo, version: nuevo.version || 2 });
   guardar();
 }
 

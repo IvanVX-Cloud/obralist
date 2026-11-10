@@ -2,14 +2,44 @@
 // ui.js — Herramientas de interfaz que usan todas las pantallas.
 // =====================================================================
 
+import { db, TIPO_CAMBIO_INICIAL } from "./datos.js";
+
 export const $ = (selector) => document.querySelector(selector);
 
-export const dinero = (n) =>
-  (Number(n) || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+// ---------- Moneda (colones ₡ / dólares $) ----------
+// REGLA: todos los montos se GUARDAN en colones. La moneda elegida sólo cambia
+// cómo se MUESTRAN y cómo se ESCRIBEN. Así, cambiar de moneda nunca daña tus datos.
+export const moneda = () => (db.perfil.moneda === "USD" ? "USD" : "CRC");
+export const tipoCambio = () => (Number(db.perfil.tipoCambio) > 0 ? Number(db.perfil.tipoCambio) : TIPO_CAMBIO_INICIAL);
+export const simbolo = () => (moneda() === "USD" ? "$" : "₡");
+
+// Colones guardados → número en la moneda elegida (para llenar un campo).
+export function aMoneda(colones) {
+  const v = moneda() === "USD" ? (Number(colones) || 0) / tipoCambio() : Number(colones) || 0;
+  return Math.round(v * 100) / 100;
+}
+
+// Número escrito por el usuario en la moneda elegida → colones para guardar.
+export function aColones(valor) {
+  const v = Number(valor) || 0;
+  return moneda() === "USD" ? v * tipoCambio() : v;
+}
+
+// Al editar: si el usuario no tocó el precio, dejamos el original (evita
+// errores de redondeo al convertir de ida y vuelta entre $ y ₡).
+export const precioEditado = (escrito, original) =>
+  Number(escrito) === aMoneda(original) ? original : aColones(escrito);
+
+export function dinero(colones) {
+  const n = Number(colones) || 0;
+  return moneda() === "USD"
+    ? (n / tipoCambio()).toLocaleString("es-CR", { style: "currency", currency: "USD", currencyDisplay: "narrowSymbol" })
+    : n.toLocaleString("es-CR", { style: "currency", currency: "CRC", currencyDisplay: "narrowSymbol", maximumFractionDigits: 0 });
+}
 
 export function fecha(iso) {
   if (!iso) return "";
-  return new Date(iso + "T12:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso + "T12:00:00").toLocaleDateString("es-CR", { day: "numeric", month: "short", year: "numeric" });
 }
 
 // Escapa texto antes de meterlo en HTML. Así, si alguien escribe <script>
@@ -118,7 +148,7 @@ export function barras(entradas, { ordenar = true } = {}) {
   return filas.map(([etiqueta, monto]) => `
     <div class="barra-fila">
       <span>${seguro(etiqueta)}</span>
-      <div class="barra"><div style="width:${(monto / max) * 100}%"></div></div>
+      <div class="barra-grafica"><div style="width:${(monto / max) * 100}%"></div></div>
       <strong>${dinero(monto)}</strong>
     </div>`).join("");
 }

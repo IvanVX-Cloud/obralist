@@ -3,7 +3,7 @@
 // de equipo…) y gráficas de en qué se va el dinero.
 // =====================================================================
 import { db, guardar, nuevoId, hoy, buscar, categoria, totalesLista, TIPOS_GASTO } from "../datos.js";
-import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, barras } from "../ui.js";
+import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, barras, simbolo, aColones } from "../ui.js";
 
 let filtroLista = "";
 
@@ -14,14 +14,14 @@ export async function nuevoGasto(listaId = "") {
     boton: "Guardar gasto",
     campos: [
       { nombre: "tipo", etiqueta: "Tipo", tipo: "select", valor: TIPOS_GASTO[0], opciones: TIPOS_GASTO.map((t) => ({ valor: t, texto: t })) },
-      { nombre: "monto", etiqueta: "Monto ($)", tipo: "number", valor: "", requerido: true },
+      { nombre: "monto", etiqueta: `Monto (${simbolo()})`, tipo: "number", valor: "", requerido: true },
       { nombre: "listaId", etiqueta: "Obra", tipo: "select", valor: listaId, opciones: [{ valor: "", texto: "— Sin obra —" }, ...db.listas.map((l) => ({ valor: l.id, texto: l.nombre }))] },
       { nombre: "fecha", etiqueta: "Fecha", tipo: "date", valor: hoy(), requerido: true },
-      { nombre: "descripcion", etiqueta: "Descripción", ancho: true, ayuda: "Ej. Raya semanal del ayudante" },
+      { nombre: "descripcion", etiqueta: "Descripción", ancho: true, ayuda: "Ej. Pago semanal del ayudante" },
     ],
   });
   if (!d) return;
-  db.gastos.unshift({ id: nuevoId(), tipo: d.tipo, monto: d.monto, listaId: d.listaId || null, fecha: d.fecha, descripcion: d.descripcion });
+  db.gastos.unshift({ id: nuevoId(), tipo: d.tipo, monto: aColones(d.monto), listaId: d.listaId || null, fecha: d.fecha, descripcion: d.descripcion });
   guardar(); refrescar();
   aviso("Gasto guardado ✓");
 }
@@ -45,7 +45,7 @@ export const vistaGastos = {
     }
     for (const g of gastos) { sumar(porTipo, g.tipo, g.monto); sumar(porMes, g.fecha.slice(0, 7), g.monto); }
     const meses = [...porMes].sort((a, b) => a[0].localeCompare(b[0])).slice(-6)
-      .map(([m, v]) => [new Date(m + "-15").toLocaleDateString("es-MX", { month: "short", year: "numeric" }), v]);
+      .map(([m, v]) => [new Date(m + "-15").toLocaleDateString("es-CR", { month: "short", year: "numeric" }), v]);
 
     return `
       <div class="encabezado">

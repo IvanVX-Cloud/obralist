@@ -5,7 +5,10 @@ import {
   db, guardar, nuevoId, hoy, buscar, categoria, unidad, totalesLista,
   asegurarCategoria, asegurarUnidad, proveedorPorNombre,
 } from "../datos.js";
-import { $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir } from "../ui.js";
+import {
+  $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir,
+  simbolo, aMoneda, aColones, precioEditado,
+} from "../ui.js";
 import { nuevoGasto } from "./gastos.js";
 
 // ---------------------------------------------------------------------
@@ -50,7 +53,7 @@ export const vistaListas = {
         campos: [
           { nombre: "nombre", etiqueta: "Nombre de la obra", requerido: true, ancho: true, ayuda: "Ej. Instalación eléctrica Casa López" },
           { nombre: "cliente", etiqueta: "Cliente" },
-          { nombre: "presupuesto", etiqueta: "Presupuesto máximo ($)", tipo: "number", valor: "" },
+          { nombre: "presupuesto", etiqueta: `Presupuesto máximo (${simbolo()})`, tipo: "number", valor: "" },
           { nombre: "direccion", etiqueta: "Dirección", ancho: true },
           {
             nombre: "plantilla", etiqueta: "Copiar materiales de otra lista", tipo: "select", ancho: true,
@@ -62,7 +65,7 @@ export const vistaListas = {
       const base = buscar("listas", d.plantilla);
       const lista = {
         id: nuevoId(), nombre: d.nombre, cliente: d.cliente, direccion: d.direccion,
-        presupuesto: d.presupuesto, creada: hoy(), archivada: false,
+        presupuesto: aColones(d.presupuesto), creada: hoy(), archivada: false,
         items: base ? base.items.map((it) => ({ ...it, id: nuevoId(), estado: "pendiente", compraId: undefined })) : [],
       };
       db.listas.unshift(lista);
@@ -175,7 +178,7 @@ export const vistaLista = {
           <label>Categoría<select name="categoriaId">${opcionesDe(db.categorias, null, (c) => `${c.icono} ${c.nombre}`)}</select></label>
           <label>Unidad<select name="unidadId">${opcionesDe(db.unidades, null, (u) => u.abrev)}</select></label>
           <label>Cantidad<input name="cantidad" type="number" min="0" step="any" inputmode="decimal" value="1" required></label>
-          <label>Precio unitario<input name="precio" type="number" min="0" step="any" inputmode="decimal" value="0" required></label>
+          <label>Precio unitario (${simbolo()})<input name="precio" type="number" min="0" step="any" inputmode="decimal" value="0" required></label>
           <label class="ancho check"><input type="checkbox" name="guardarCatalogo" checked> Guardar en mi catálogo si es nuevo</label>
           <button class="ancho principal">Agregar a la lista</button>
         </form>
@@ -208,7 +211,7 @@ export const vistaLista = {
       const f = el.form;
       f.categoriaId.value = p.categoriaId;
       f.unidadId.value = p.unidadId;
-      f.precio.value = p.precio;
+      f.precio.value = aMoneda(p.precio);
     },
   },
 
@@ -217,7 +220,7 @@ export const vistaLista = {
       const nombre = d.nombre.trim();
       if (!nombre) return;
       const cantidad = Number(d.cantidad) || 0;
-      const precio = Number(d.precio) || 0;
+      const precio = aColones(d.precio); // lo escrito está en la moneda elegida
       let prod = db.productos.find((p) => p.nombre.toLowerCase() === nombre.toLowerCase());
       if (!prod && d.guardarCatalogo) {
         prod = { id: nuevoId(), nombre, categoriaId: d.categoriaId, unidadId: d.unidadId, precio };
@@ -255,10 +258,11 @@ export const vistaLista = {
           { nombre: "categoriaId", etiqueta: "Categoría", tipo: "select", valor: it.categoriaId, opciones: db.categorias.map((c) => ({ valor: c.id, texto: `${c.icono} ${c.nombre}` })) },
           { nombre: "unidadId", etiqueta: "Unidad", tipo: "select", valor: it.unidadId, opciones: db.unidades.map((u) => ({ valor: u.id, texto: u.abrev })) },
           { nombre: "cantidad", etiqueta: "Cantidad", tipo: "number", valor: it.cantidad },
-          { nombre: "precio", etiqueta: "Precio unitario", tipo: "number", valor: it.precio },
+          { nombre: "precio", etiqueta: `Precio unitario (${simbolo()})`, tipo: "number", valor: aMoneda(it.precio) },
         ],
       });
       if (!d) return;
+      d.precio = precioEditado(d.precio, it.precio);
       Object.assign(it, d);
       guardar(); refrescar();
     },
@@ -309,11 +313,12 @@ export const vistaLista = {
         campos: [
           { nombre: "nombre", etiqueta: "Nombre de la obra", valor: lista.nombre, requerido: true, ancho: true },
           { nombre: "cliente", etiqueta: "Cliente", valor: lista.cliente },
-          { nombre: "presupuesto", etiqueta: "Presupuesto máximo ($)", tipo: "number", valor: lista.presupuesto || "" },
+          { nombre: "presupuesto", etiqueta: `Presupuesto máximo (${simbolo()})`, tipo: "number", valor: aMoneda(lista.presupuesto) || "" },
           { nombre: "direccion", etiqueta: "Dirección", valor: lista.direccion, ancho: true },
         ],
       });
       if (!d) return;
+      d.presupuesto = precioEditado(d.presupuesto, lista.presupuesto);
       Object.assign(lista, d);
       guardar(); refrescar();
     },
@@ -335,9 +340,10 @@ export const vistaLista = {
     },
 
     csv() {
-      const filas = [["Material", "Categoría", "Unidad", "Cantidad", "Precio", "Importe", "Estado"]];
+      const s = simbolo();
+      const filas = [["Material", "Categoría", "Unidad", "Cantidad", `Precio (${s})`, `Importe (${s})`, "Estado"]];
       for (const i of lista.items) {
-        filas.push([i.nombre, categoria(i.categoriaId).nombre, unidad(i.unidadId).abrev, i.cantidad, i.precio, i.cantidad * i.precio, i.estado]);
+        filas.push([i.nombre, categoria(i.categoriaId).nombre, unidad(i.unidadId).abrev, i.cantidad, aMoneda(i.precio), aMoneda(i.cantidad * i.precio), i.estado]);
       }
       const csv = filas.map((f) => f.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
       descargar(`${lista.nombre}.csv`, "﻿" + csv, "text/csv;charset=utf-8");
@@ -366,7 +372,9 @@ export const vistaLista = {
         guardar();
       }
       const datos = {
-        tipo: "obralist-lista", version: 1, de: db.perfil.nombre, fecha: hoy(),
+        // Los precios del archivo van en colones (la moneda base), sin importar
+        // cuál tengas elegida, para que quien lo reciba no mezcle monedas.
+        tipo: "obralist-lista", version: 1, moneda: "CRC", de: db.perfil.nombre, fecha: hoy(),
         lista: {
           nombre: lista.nombre, cliente: lista.cliente, direccion: lista.direccion, presupuesto: lista.presupuesto,
           items: lista.items.map((i) => ({

@@ -14,7 +14,7 @@
 
   <!-- PWA: nombre, ícono y colores para instalarla en el celular -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#e8892b">
+  <meta name="theme-color" content="#1f1a14">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ObraList">
@@ -22,7 +22,19 @@
 <body>
   <header class="barra">
     <div class="barra-interior">
-      <h1>🧱 ObraList</h1>
+      <a href="#/listas" class="marca" aria-label="ObraList, ir al inicio">
+        <!-- Logo: un casco de construcción dibujado con SVG (se ve nítido en cualquier tamaño) -->
+        <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+          <rect width="48" height="48" rx="12" fill="#e8892b"/>
+          <path d="M10 31a14 14 0 0 1 28 0z" fill="#1b1300"/>
+          <rect x="7" y="30" width="34" height="5" rx="2.5" fill="#1b1300"/>
+          <rect x="21.5" y="15" width="5" height="11" rx="2.5" fill="#e8892b"/>
+        </svg>
+        <span class="marca-texto">
+          <span class="marca-nombre">Obra<span>List</span></span>
+          <span class="marca-lema">Materiales y gastos de obra</span>
+        </span>
+      </a>
       <button id="btnInstalar" type="button" class="instalar" hidden>📲 Instalar</button>
     </div>
     <p id="ayudaIos" class="sub" hidden>En iPhone: toca Compartir ⬆️ y luego "Agregar a inicio".</p>

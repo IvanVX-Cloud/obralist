@@ -2,7 +2,63 @@
 // "Más": perfil, cuenta, proveedores, categorías, unidades y respaldo.
 // =====================================================================
 import { db, guardar, nuevoId, hoy, buscar, reemplazarTodo, esRespaldoValido, semilla } from "../datos.js";
-import { seguro, formulario, aviso, refrescar, descargar } from "../ui.js";
+import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero } from "../ui.js";
+import { VERSION_APP, SOPORTE } from "../config.js";
+
+// Tarjeta de moneda: colones o dólares + tipo de cambio.
+function tarjetaMoneda() {
+  const m = moneda();
+  return `
+    <section class="tarjeta">
+      <h3>💱 Moneda</h3>
+      <form data-form="moneda" class="formulario">
+        <label>Mostrar precios en
+          <select name="moneda">
+            <option value="CRC" ${m === "CRC" ? "selected" : ""}>₡ Colones</option>
+            <option value="USD" ${m === "USD" ? "selected" : ""}>$ Dólares</option>
+          </select>
+        </label>
+        <label>Tipo de cambio (₡ por $1)
+          <input name="tipoCambio" type="number" min="1" step="any" inputmode="decimal" value="${tipoCambio()}" required>
+        </label>
+        <button class="principal ancho">Guardar moneda</button>
+      </form>
+      <p class="nota">Todo se guarda en colones; al elegir dólares se convierte con este tipo de cambio.
+      Consulta el del día en el Banco Central (BCCR). Ejemplo: ₡10 000 = ${dinero(10000)}.</p>
+    </section>`;
+}
+
+// Tarjeta de ayuda: preguntas frecuentes + formas de contacto.
+function tarjetaSoporte() {
+  const info = `ObraList ${VERSION_APP} · ${navigator.userAgent}`;
+  const botones = [];
+  if (SOPORTE.whatsapp) {
+    const texto = encodeURIComponent("Hola, necesito ayuda con ObraList.");
+    botones.push(`<a class="boton" href="https://wa.me/${SOPORTE.whatsapp}?text=${texto}" target="_blank" rel="noopener">💬 WhatsApp</a>`);
+  }
+  if (SOPORTE.correo) {
+    const asunto = encodeURIComponent("Ayuda con ObraList");
+    const cuerpo = encodeURIComponent(`Cuéntanos qué pasó:\n\n\n---\n${info}`);
+    botones.push(`<a class="boton" href="mailto:${SOPORTE.correo}?subject=${asunto}&body=${cuerpo}">✉️ Correo</a>`);
+  }
+  if (SOPORTE.github) {
+    botones.push(`<a class="boton" href="${SOPORTE.github}" target="_blank" rel="noopener">🐞 Reportar un problema</a>`);
+  }
+  const preguntas = [
+    ["¿Dónde se guardan mis datos?", "En este dispositivo, dentro del navegador. Nadie más los ve. Haz respaldos de vez en cuando (abajo, en 💾 Respaldo)."],
+    ["¿Cómo paso mis datos a otro celular?", "Aquí en Más → Descargar respaldo; mándate el archivo y en el otro celular usa Restaurar respaldo."],
+    ["¿Cómo comparto una lista con alguien?", "Abre la lista → 💾 Enviar archivo. La otra persona la importa en Listas → 📥 Recibidas."],
+    ["¿Funciona sin internet?", "Sí. Ábrela una vez con internet y después funciona sin señal en la obra."],
+    ["Los precios no son los de mi ferretería", "Son de ejemplo. Edítalos en 📦 Catálogo; además se actualizan solos cada vez que registras una compra."],
+  ];
+  return `
+    <section class="tarjeta">
+      <h3>🛟 Ayuda y soporte</h3>
+      ${preguntas.map(([p, r]) => `<details class="pregunta"><summary>${p}</summary><p class="nota">${r}</p></details>`).join("")}
+      ${botones.length ? `<p class="nota" style="margin-top:12px">¿No encontraste tu respuesta? Escríbenos:</p>
+      <div class="acciones-lista">${botones.join("")}</div>` : ""}
+    </section>`;
+}
 import { plataforma, enAppInstalada, sePuedeInstalar, instalar } from "../instalar.js";
 
 // Tarjeta "Instalar en tu celular": cambia según el teléfono y si ya está instalada.
@@ -81,6 +137,8 @@ export const vistaMas = {
 
       ${tarjetaInstalar()}
 
+      ${tarjetaMoneda()}
+
       <section class="tarjeta">
         <h3>👷 Tu perfil</h3>
         <form data-form="perfil" class="fila">
@@ -123,10 +181,19 @@ export const vistaMas = {
         </div>
       </section>
 
-      <p class="nota centro">ObraList · versión de aprendizaje</p>`;
+      ${tarjetaSoporte()}
+
+      <p class="nota centro">ObraList ${VERSION_APP} · Hecha en Costa Rica 🇨🇷</p>`;
   },
 
   formularios: {
+    moneda(form, d) {
+      db.perfil.moneda = d.moneda === "USD" ? "USD" : "CRC";
+      db.perfil.tipoCambio = Number(d.tipoCambio) > 0 ? Number(d.tipoCambio) : tipoCambio();
+      guardar(); refrescar();
+      aviso(db.perfil.moneda === "USD" ? "Ahora ves los precios en dólares" : "Ahora ves los precios en colones");
+    },
+
     perfil(form, d) {
       db.perfil.nombre = d.nombre.trim();
       guardar();

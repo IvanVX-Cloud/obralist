@@ -2,7 +2,7 @@
 // Catálogo: tus materiales con su precio, y dónde salen más baratos.
 // =====================================================================
 import { db, guardar, nuevoId, buscar, categoria, unidad, historialPrecios } from "../datos.js";
-import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, mostrar } from "../ui.js";
+import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, mostrar, simbolo, aMoneda, aColones, precioEditado } from "../ui.js";
 
 let filtroCategoria = "";
 
@@ -128,10 +128,11 @@ async function editarProducto(p) {
       { nombre: "nombre", etiqueta: "Nombre", valor: p?.nombre, requerido: true, ancho: true, ayuda: "Ej. Cable THW calibre 12 (rollo 100 m)" },
       { nombre: "categoriaId", etiqueta: "Categoría", tipo: "select", valor: p?.categoriaId || filtroCategoria, opciones: db.categorias.map((c) => ({ valor: c.id, texto: `${c.icono} ${c.nombre}` })) },
       { nombre: "unidadId", etiqueta: "Unidad", tipo: "select", valor: p?.unidadId, opciones: db.unidades.map((u) => ({ valor: u.id, texto: `${u.nombre} (${u.abrev})` })) },
-      { nombre: "precio", etiqueta: "Precio unitario ($)", tipo: "number", valor: p?.precio ?? "" },
+      { nombre: "precio", etiqueta: `Precio unitario (${simbolo()})`, tipo: "number", valor: p ? aMoneda(p.precio) : "" },
     ],
   });
   if (!d) return;
+  d.precio = p ? precioEditado(d.precio, p.precio) : aColones(d.precio);
   if (p) Object.assign(p, d);
   else db.productos.push({ id: nuevoId(), ...d });
   guardar(); refrescar();
