@@ -3,7 +3,7 @@
 // =====================================================================
 import {
   db, guardar, nuevoId, hoy, buscar, categoria, unidad, totalesLista,
-  asegurarCategoria, asegurarUnidad, proveedorPorNombre,
+  asegurarCategoria, asegurarUnidad, proveedorPorNombre, quienSoy, OCUPACIONES,
 } from "../datos.js";
 import {
   $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir,
@@ -21,7 +21,12 @@ export const vistaListas = {
     const propias = db.listas.filter((l) => !l.archivada && !l.recibida);
     const recibidas = db.listas.filter((l) => !l.archivada && l.recibida);
     const archivadas = db.listas.filter((l) => l.archivada);
+    const { nombre, ocupacion } = db.perfil;
+    const saludo = nombre
+      ? `<p class="saludo">👋 Hola, <strong>${seguro(nombre.split(" ")[0])}</strong>${ocupacion ? ` <span class="etiqueta-oficio">${seguro(ocupacion)}</span>` : ""}</p>`
+      : `<p class="nota"><a href="#/mas">Completa tu perfil</a> con tu nombre y ocupación.</p>`;
     return `
+      ${saludo}
       <div class="encabezado">
         <h2>Mis listas de obra</h2>
         <button class="principal" data-accion="nueva">+ Nueva lista</button>
@@ -87,7 +92,7 @@ export const vistaListas = {
           id: nuevoId(), nombre: String(l.nombre || "Lista recibida"), cliente: String(l.cliente || ""),
           direccion: String(l.direccion || ""), presupuesto: Number(l.presupuesto) || 0,
           creada: hoy(), archivada: false,
-          recibida: { de: String(o.de || "Alguien"), fecha: hoy() },
+          recibida: { de: String(o.de || "Alguien"), ocupacion: String(o.ocupacion || ""), fecha: hoy() },
           items: l.items.map((it) => ({
             id: nuevoId(),
             productoId: db.productos.find((p) => p.nombre === it.nombre)?.id || null,
@@ -112,7 +117,7 @@ export const vistaListas = {
 function tarjetaLista(l) {
   const t = totalesLista(l);
   const pct = t.total ? Math.round((t.comprado / t.total) * 100) : 0;
-  const sub = [l.recibida ? `📥 De ${l.recibida.de}` : "", l.cliente, `${l.items.length} materiales`].filter(Boolean);
+  const sub = [l.recibida ? `📥 De ${quienSoy(l.recibida.de, l.recibida.ocupacion)}` : "", l.cliente, `${l.items.length} ${l.items.length === 1 ? "material" : "materiales"}`].filter(Boolean);
   return `
     <a class="tarjeta lista-tarjeta" href="#/lista/${l.id}">
       <strong>${seguro(l.nombre)}</strong>
@@ -140,7 +145,7 @@ export const vistaLista = {
     const porComprar = l.items.filter((i) => i.estado !== "comprado");
     const comprados = l.items.filter((i) => i.estado === "comprado");
     const enCarrito = l.items.filter((i) => i.estado === "carrito");
-    const info = [l.cliente, l.direccion, l.recibida ? `📥 Recibida de ${l.recibida.de}` : ""].filter(Boolean);
+    const info = [l.cliente, l.direccion, l.recibida ? `📥 Recibida de ${quienSoy(l.recibida.de, l.recibida.ocupacion)}` : ""].filter(Boolean);
 
     return `
       <a href="#/listas" class="volver">← Mis listas</a>
@@ -364,17 +369,20 @@ export const vistaLista = {
     // Archivo que la otra persona importa en su ObraList (queda en "Recibidas").
     async compartirArchivo() {
       if (!db.perfil.nombre) {
-        const d = await formulario({ titulo: "¿Cómo te llamas?", boton: "Continuar", campos: [
-          { nombre: "nombre", etiqueta: "Tu nombre (para que sepan quién manda la lista)", requerido: true, ancho: true },
+        const d = await formulario({ titulo: "¿Quién manda la lista?", boton: "Continuar", campos: [
+          { nombre: "nombre", etiqueta: "Tu nombre", requerido: true, ancho: true },
+          { nombre: "ocupacion", etiqueta: "Tu ocupación", ancho: true, ayuda: "Ej. Electricista", sugerencias: OCUPACIONES },
         ] });
         if (!d) return;
         db.perfil.nombre = d.nombre;
+        db.perfil.ocupacion = d.ocupacion;
         guardar();
       }
       const datos = {
         // Los precios del archivo van en colones (la moneda base), sin importar
         // cuál tengas elegida, para que quien lo reciba no mezcle monedas.
-        tipo: "obralist-lista", version: 1, moneda: "CRC", de: db.perfil.nombre, fecha: hoy(),
+        tipo: "obralist-lista", version: 1, moneda: "CRC",
+        de: db.perfil.nombre, ocupacion: db.perfil.ocupacion || "", fecha: hoy(),
         lista: {
           nombre: lista.nombre, cliente: lista.cliente, direccion: lista.direccion, presupuesto: lista.presupuesto,
           items: lista.items.map((i) => ({
@@ -469,6 +477,8 @@ function textoLista(l) {
     for (const i of its) lineas.push(`• ${i.cantidad} ${unidad(i.unidadId).abrev} — ${i.nombre}`);
   }
   const total = pendientes.reduce((s, i) => s + i.cantidad * i.precio, 0);
-  lineas.push("", `Total estimado: ${dinero(total)}`, "", "Hecha con ObraList");
+  lineas.push("", `Total estimado: ${dinero(total)}`);
+  const autor = quienSoy(db.perfil.nombre, db.perfil.ocupacion);
+  lineas.push("", autor ? `Enviada por ${autor} · ObraList` : "Hecha con ObraList");
   return lineas.join("\n");
 }

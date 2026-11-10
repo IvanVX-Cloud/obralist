@@ -1,7 +1,7 @@
 // =====================================================================
 // "Más": perfil, cuenta, proveedores, categorías, unidades y respaldo.
 // =====================================================================
-import { db, guardar, nuevoId, hoy, buscar, reemplazarTodo, esRespaldoValido, semilla } from "../datos.js";
+import { db, guardar, nuevoId, hoy, buscar, reemplazarTodo, esRespaldoValido, semilla, OCUPACIONES } from "../datos.js";
 import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero } from "../ui.js";
 import { VERSION_APP, SOPORTE } from "../config.js";
 
@@ -141,11 +141,18 @@ export const vistaMas = {
 
       <section class="tarjeta">
         <h3>👷 Tu perfil</h3>
-        <form data-form="perfil" class="fila">
-          <input name="nombre" value="${seguro(db.perfil.nombre)}" placeholder="Tu nombre o el de tu empresa" aria-label="Tu nombre">
-          <button class="principal">Guardar</button>
+        <form data-form="perfil" class="formulario">
+          <label>Nombre
+            <input name="nombre" value="${seguro(db.perfil.nombre)}" placeholder="Tu nombre o el de tu empresa">
+          </label>
+          <label>Ocupación
+            <input name="ocupacion" list="dl-ocupaciones" value="${seguro(db.perfil.ocupacion || "")}" placeholder="Ej. Electricista" autocomplete="off">
+            <datalist id="dl-ocupaciones">${OCUPACIONES.map((o) => `<option value="${seguro(o)}">`).join("")}</datalist>
+          </label>
+          <button class="principal ancho">Guardar perfil</button>
         </form>
-        <p class="nota">Se usa cuando compartes una lista, para que sepan quién la manda.</p>
+        <p class="nota">Aparece cuando compartes una lista, para que sepan quién la manda y cuál es su labor.
+        Elige de la lista o escribe la tuya.</p>
       </section>
 
       <section class="tarjeta cuenta">
@@ -196,6 +203,7 @@ export const vistaMas = {
 
     perfil(form, d) {
       db.perfil.nombre = d.nombre.trim();
+      db.perfil.ocupacion = d.ocupacion.trim();
       guardar();
       aviso("Perfil guardado ✓");
     },

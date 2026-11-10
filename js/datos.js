@@ -27,6 +27,20 @@ export function hoy() {
   return d.toISOString().slice(0, 10);
 }
 
+// Sugerencias de oficio para el perfil (también se puede escribir otro).
+export const OCUPACIONES = [
+  "Electricista", "Maestro de obras", "Albañil", "Fontanero", "Pintor", "Soldador / Herrero",
+  "Carpintero", "Enchapador", "Ingeniero/a", "Arquitecto/a", "Contratista", "Ayudante",
+  "Ferretería / Proveedor", "Dueño/a de la obra",
+];
+
+// "Ivan (Electricista)", o sólo lo que haya.
+export function quienSoy(nombre, ocupacion) {
+  const n = String(nombre || "").trim();
+  const o = String(ocupacion || "").trim();
+  return n && o ? `${n} (${o})` : n || o;
+}
+
 export const TIPOS_GASTO = [
   "Mano de obra", "Flete / acarreo", "Renta de equipo", "Permisos y trámites",
   "Comida y viáticos", "Gasolina", "Otro",
@@ -124,7 +138,7 @@ const PRODUCTOS_ANTERIORES = [
 
 function vacio() {
   return {
-    version: 3, perfil: { nombre: "", moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL },
+    version: 3, perfil: { nombre: "", ocupacion: "", moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL },
     categorias: [], unidades: [], productos: [], proveedores: [],
     listas: [], compras: [], gastos: [],
   };
