@@ -10,12 +10,14 @@
 //   formularios    → al enviar un <form data-form="...">
 // =====================================================================
 import { $, alRefrescar, aplicarApariencia } from "./ui.js";
+import { icono } from "./iconos.js";
 import { vistaListas, vistaLista } from "./vistas/listas.js";
 import { vistaCatalogo } from "./vistas/catalogo.js";
 import { vistaHistorial } from "./vistas/historial.js";
 import { vistaGastos } from "./vistas/gastos.js";
 import { vistaMas } from "./vistas/mas.js";
 import { vistaCalculadoras } from "./vistas/calculadoras.js";
+import { vistaBitacora } from "./vistas/bitacora.js";
 import { iniciarInstalacion } from "./instalar.js";
 
 const VISTAS = {
@@ -26,6 +28,7 @@ const VISTAS = {
   gastos: vistaGastos,
   mas: vistaMas,
   calculadoras: vistaCalculadoras,
+  bitacora: vistaBitacora,
 };
 
 let actual = vistaListas;
@@ -35,6 +38,7 @@ function render() {
   const [nombre, param] = location.hash.replace(/^#\/?/, "").split("/");
   actual = VISTAS[nombre] || vistaListas;
   $("#vista").innerHTML = actual.render(param ? decodeURIComponent(param) : undefined);
+  actual.despues?.(); // algunas pantallas cargan cosas después de dibujarse (ej. fotos)
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("activa", a.dataset.tab === actual.tab));
 }
 
@@ -71,6 +75,9 @@ vista.addEventListener("submit", (e) => {
   e.preventDefault();
   f(form, Object.fromEntries(new FormData(form)));
 });
+
+// Íconos del HTML fijo (pestañas, botón instalar): <span data-icono="listas">
+document.querySelectorAll("[data-icono]").forEach((el) => { el.outerHTML = icono(el.dataset.icono); });
 
 aplicarApariencia();
 render();

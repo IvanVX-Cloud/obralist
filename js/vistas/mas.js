@@ -10,25 +10,26 @@ function tarjetaApariencia() {
   const op = (v, t) => `<option value="${v}" ${tema === v ? "selected" : ""}>${t}</option>`;
   return `
     <section class="tarjeta">
-      <h3>🔆 Apariencia</h3>
+      <h3>${icono("apariencia")}Apariencia</h3>
       <form data-form="apariencia" class="formulario">
         <label class="ancho">Tema
-          <select name="tema">${op("auto", "Automático (como el celular)")}${op("claro", "☀️ Claro: mejor bajo el sol")}${op("oscuro", "🌙 Oscuro")}</select>
+          <select name="tema">${op("auto", "Automático (como el celular)")}${op("claro", "Claro: se lee mejor bajo el sol")}${op("oscuro", "Oscuro")}</select>
         </label>
         <label class="ancho check"><input type="checkbox" name="modoObra" ${db.perfil.modoObra ? "checked" : ""}>
-          👷 Modo obra: letra grande, más contraste y botones más grandes</label>
+          Modo obra: letra grande, más contraste y botones más grandes</label>
         <button class="principal ancho">Aplicar</button>
       </form>
     </section>`;
 }
 import { VERSION_APP, SOPORTE } from "../config.js";
+import { icono, ICONOS_CATEGORIA } from "../iconos.js";
 
 // Tarjeta de moneda: colones o dólares + tipo de cambio.
 function tarjetaMoneda() {
   const m = moneda();
   return `
     <section class="tarjeta">
-      <h3>💱 Moneda</h3>
+      <h3>${icono("moneda")}Moneda</h3>
       <form data-form="moneda" class="formulario">
         <label>Mostrar precios en
           <select name="moneda">
@@ -52,26 +53,26 @@ function tarjetaSoporte() {
   const botones = [];
   if (SOPORTE.whatsapp) {
     const texto = encodeURIComponent("Hola, necesito ayuda con ObraList.");
-    botones.push(`<a class="boton" href="https://wa.me/${SOPORTE.whatsapp}?text=${texto}" target="_blank" rel="noopener">💬 WhatsApp</a>`);
+    botones.push(`<a class="boton" href="https://wa.me/${SOPORTE.whatsapp}?text=${texto}" target="_blank" rel="noopener">${icono("mensaje")}WhatsApp</a>`);
   }
   if (SOPORTE.correo) {
     const asunto = encodeURIComponent("Ayuda con ObraList");
     const cuerpo = encodeURIComponent(`Cuéntanos qué pasó:\n\n\n---\n${info}`);
-    botones.push(`<a class="boton" href="mailto:${SOPORTE.correo}?subject=${asunto}&body=${cuerpo}">✉️ Correo</a>`);
+    botones.push(`<a class="boton" href="mailto:${SOPORTE.correo}?subject=${asunto}&body=${cuerpo}">${icono("correo")}Correo</a>`);
   }
   if (SOPORTE.github) {
-    botones.push(`<a class="boton" href="${SOPORTE.github}" target="_blank" rel="noopener">🐞 Reportar un problema</a>`);
+    botones.push(`<a class="boton" href="${SOPORTE.github}" target="_blank" rel="noopener">${icono("alerta")}Reportar un problema</a>`);
   }
   const preguntas = [
-    ["¿Dónde se guardan mis datos?", "En este dispositivo, dentro del navegador. Nadie más los ve. Haz respaldos de vez en cuando (abajo, en 💾 Respaldo)."],
-    ["¿Cómo paso mis datos a otro celular?", "Aquí en Más → Descargar respaldo; mándate el archivo y en el otro celular usa Restaurar respaldo."],
-    ["¿Cómo comparto una lista con alguien?", "Abre la lista → 💾 Enviar archivo. La otra persona la importa en Listas → 📥 Recibidas."],
+    ["¿Dónde se guardan mis datos?", "En este dispositivo, dentro del navegador. Nadie más los ve. Haz respaldos de vez en cuando (abajo, en Respaldo)."],
+    ["¿Cómo paso mis datos a otro celular?", "Aquí en Más, toca Descargar respaldo; mándate el archivo y en el otro celular usa Restaurar respaldo."],
+    ["¿Cómo comparto una lista con alguien?", "Abre la lista y toca Enviar archivo. La otra persona la importa en Listas, sección Recibidas."],
     ["¿Funciona sin internet?", "Sí. Ábrela una vez con internet y después funciona sin señal en la obra."],
-    ["Los precios no son los de mi ferretería", "Son de ejemplo. Edítalos en 📦 Catálogo; además se actualizan solos cada vez que registras una compra."],
+    ["Los precios no son los de mi ferretería", "Son de ejemplo. Edítalos en Catálogo; además se actualizan solos cada vez que registras una compra."],
   ];
   return `
     <section class="tarjeta">
-      <h3>🛟 Ayuda y soporte</h3>
+      <h3>${icono("ayuda")}Ayuda y soporte</h3>
       ${preguntas.map(([p, r]) => `<details class="pregunta"><summary>${p}</summary><p class="nota">${r}</p></details>`).join("")}
       ${botones.length ? `<p class="nota" style="margin-top:12px">¿No encontraste tu respuesta? Escríbenos:</p>
       <div class="acciones-lista">${botones.join("")}</div>` : ""}
@@ -83,14 +84,14 @@ import { plataforma, enAppInstalada, sePuedeInstalar, instalar } from "../instal
 function tarjetaInstalar() {
   let contenido;
   if (enAppInstalada()) {
-    contenido = `<p>✅ Estás usando la app instalada. Se actualiza sola cada vez que la abres con internet.</p>`;
+    contenido = `<p>${icono("check", "icono-acento")} Estás usando la app instalada. Se actualiza sola cada vez que la abres con internet.</p>`;
   } else if (sePuedeInstalar()) {
-    contenido = `<button class="principal ancho-total" data-accion="instalar">📲 Instalar ObraList</button>`;
+    contenido = `<button class="principal ancho-total" data-accion="instalar">${icono("descargar")}Instalar ObraList</button>`;
   } else if (plataforma === "ios") {
     contenido = `
       <ol class="pasos">
         <li>Abre esta página en <strong>Safari</strong>.</li>
-        <li>Toca <strong>Compartir</strong> ⬆️ (abajo al centro).</li>
+        <li>Toca <strong>Compartir</strong> (abajo al centro).</li>
         <li>Elige <strong>"Agregar a inicio"</strong> y luego <strong>Agregar</strong>.</li>
       </ol>`;
   } else if (plataforma === "android") {
@@ -101,41 +102,42 @@ function tarjetaInstalar() {
         ventana elige <strong>"Instalar"</strong>, <u>no</u> "Crear acceso directo".</li>
       </ol>
       <p class="nota">¿Cómo saber si quedó como app? Se abre <strong>sin barra de direcciones</strong>, el ícono
-      <strong>no</strong> tiene la marquita de Chrome y aparece en Ajustes → Aplicaciones.</p>
+      <strong>no</strong> tiene la marquita de Chrome y aparece en Ajustes, en Aplicaciones.</p>
       <p class="nota">¿No aparece "Instalar"? Seguramente <strong>ya está instalada</strong> una versión anterior:
       búscala en tu cajón de apps y ábrela con internet (se actualiza sola), o desinstálala y recarga esta página.</p>`;
   } else {
-    contenido = `<p class="nota">En la computadora, con Chrome o Edge, busca el ícono de instalar (🖥️⬇️) a la
+    contenido = `<p class="nota">En la computadora, con Chrome o Edge, busca el ícono de instalar a la
       derecha de la barra de direcciones. Para el celular, abre el enlace de tu app en el teléfono.</p>`;
   }
-  return `<section class="tarjeta"><h3>📲 Instalar en tu celular</h3>${contenido}</section>`;
+  return `<section class="tarjeta"><h3>${icono("instalar")}Instalar en tu celular</h3>${contenido}</section>`;
 }
 
 // Configuración de cada colección que se puede editar aquí.
 // Así un solo código sirve para las tres (agregar, editar, borrar).
 const COLECCIONES = {
   proveedores: {
-    titulo: "🏪 Proveedores", singular: "proveedor",
+    titulo: "Proveedores", icono: "tienda", singular: "proveedor",
     campos: (x) => [
       { nombre: "nombre", etiqueta: "Nombre", valor: x?.nombre, requerido: true, ancho: true, ayuda: "Ej. Ferretería El Martillo" },
       { nombre: "telefono", etiqueta: "Teléfono", tipo: "tel", valor: x?.telefono },
       { nombre: "notas", etiqueta: "Notas", valor: x?.notas, ayuda: "Da crédito, entrega a domicilio…" },
     ],
-    linea: (x) => `${seguro(x.nombre)}${x.telefono ? ` · <a href="tel:${seguro(x.telefono)}">📞 ${seguro(x.telefono)}</a>` : ""}${x.notas ? `<div class="detalle">${seguro(x.notas)}</div>` : ""}`,
+    linea: (x) => `${seguro(x.nombre)}${x.telefono ? ` · <a href="tel:${seguro(x.telefono)}">${icono("telefono")} ${seguro(x.telefono)}</a>` : ""}${x.notas ? `<div class="detalle">${seguro(x.notas)}</div>` : ""}`,
     usos: (id) => db.compras.filter((c) => c.proveedorId === id).length,
   },
   categorias: {
-    titulo: "🗂️ Categorías", singular: "categoría",
+    titulo: "Categorías", icono: "etiqueta", singular: "categoría",
     campos: (x) => [
-      { nombre: "icono", etiqueta: "Ícono (emoji)", valor: x?.icono || "📦" },
+      { nombre: "icono", etiqueta: "Ícono", tipo: "select", valor: x?.icono || "etiqueta",
+        opciones: Object.entries(ICONOS_CATEGORIA).map(([valor, texto]) => ({ valor, texto })) },
       { nombre: "nombre", etiqueta: "Nombre", valor: x?.nombre, requerido: true, ayuda: "Ej. Impermeabilización" },
     ],
-    linea: (x) => `${seguro(x.icono)} ${seguro(x.nombre)}`,
+    linea: (x) => `${icono(x.icono, "icono-acento")} ${seguro(x.nombre)}`,
     usos: (id) => db.productos.filter((p) => p.categoriaId === id).length
       + db.listas.reduce((s, l) => s + l.items.filter((i) => i.categoriaId === id).length, 0),
   },
   unidades: {
-    titulo: "📏 Unidades de medida", singular: "unidad",
+    titulo: "Unidades de medida", icono: "regla", singular: "unidad",
     campos: (x) => [
       { nombre: "nombre", etiqueta: "Nombre", valor: x?.nombre, requerido: true, ayuda: "Ej. Metro lineal" },
       { nombre: "abrev", etiqueta: "Abreviatura", valor: x?.abrev, requerido: true, ayuda: "Ej. ml" },
@@ -160,7 +162,7 @@ export const vistaMas = {
       ${tarjetaApariencia()}
 
       <section class="tarjeta">
-        <h3>👷 Tu perfil</h3>
+        <h3>${icono("usuario")}Tu perfil</h3>
         <form data-form="perfil" class="formulario">
           <label>Nombre
             <input name="nombre" value="${seguro(db.perfil.nombre)}" placeholder="Tu nombre o el de tu empresa">
@@ -176,7 +178,7 @@ export const vistaMas = {
       </section>
 
       <section class="tarjeta cuenta">
-        <h3>☁️ Cuenta en la nube <span class="etiqueta">Próximamente</span></h3>
+        <h3>${icono("nube")}Cuenta en la nube <span class="etiqueta">Próximamente</span></h3>
         <p class="nota">Por ahora tus datos viven sólo en este dispositivo. En el siguiente paso conectaremos
         una base de datos en la nube (Supabase) para iniciar sesión, usar la app en el celular y en la compu
         con los mismos datos, y compartir listas con tu cuadrilla al instante.</p>
@@ -185,32 +187,32 @@ export const vistaMas = {
       ${Object.entries(COLECCIONES).map(([clave, cfg]) => `
         <section class="tarjeta">
           <div class="encabezado">
-            <h3>${cfg.titulo} <span class="nota">(${db[clave].length})</span></h3>
+            <h3>${icono(cfg.icono)}${cfg.titulo} <span class="nota">(${db[clave].length})</span></h3>
             <button data-accion="crear" data-col="${clave}">+ Agregar</button>
           </div>
           ${db[clave].length ? db[clave].map((x) => `
             <div class="producto" data-id="${x.id}" data-col="${clave}">
               <div>${cfg.linea(x)}</div>
               <div class="botones">
-                <button data-accion="editar" aria-label="Editar">✏️</button>
-                <button data-accion="borrar" aria-label="Borrar">🗑️</button>
+                <button data-accion="editar" aria-label="Editar">${icono("editar")}</button>
+                <button data-accion="borrar" aria-label="Borrar">${icono("borrar")}</button>
               </div>
             </div>`).join("") : `<p class="nota">Se agregan solos cuando registras una compra, o agrégalos aquí.</p>`}
         </section>`).join("")}
 
       <section class="tarjeta">
-        <h3>💾 Respaldo</h3>
-        <p class="nota">Guarda una copia de TODO (listas, catálogo, compras, gastos) en un archivo. Útil para pasar tus datos a otro celular.</p>
+        <h3>${icono("respaldo")}Respaldo</h3>
+        <p class="nota">Guarda una copia de TODO (listas, catálogo, compras, gastos) en un archivo. Útil para pasar tus datos a otro celular. Las fotos de la bitácora no se incluyen: se quedan en este dispositivo.</p>
         <div class="acciones-lista">
-          <button data-accion="exportar">⬇️ Descargar respaldo</button>
-          <label class="boton">⬆️ Restaurar respaldo<input type="file" accept=".json,application/json" data-cambio="restaurar" hidden></label>
-          <button data-accion="reiniciar" class="peligro">🧨 Borrar todo</button>
+          <button data-accion="exportar">${icono("descargar")}Descargar respaldo</button>
+          <label class="boton">${icono("enviar")}Restaurar respaldo<input type="file" accept=".json,application/json" data-cambio="restaurar" hidden></label>
+          <button data-accion="reiniciar" class="peligro">${icono("borrar")}Borrar todo</button>
         </div>
       </section>
 
       ${tarjetaSoporte()}
 
-      <p class="nota centro">ObraList ${VERSION_APP} · Hecha en Costa Rica 🇨🇷</p>`;
+      <p class="nota centro">ObraList ${VERSION_APP} · Hecha en Costa Rica</p>`;
   },
 
   formularios: {
@@ -220,7 +222,7 @@ export const vistaMas = {
       guardar();
       aplicarApariencia();
       refrescar();
-      aviso("Apariencia aplicada ✓");
+      aviso("Apariencia aplicada");
     },
 
     moneda(form, d) {
@@ -232,9 +234,10 @@ export const vistaMas = {
 
     perfil(form, d) {
       db.perfil.nombre = d.nombre.trim();
+      const cambioOficio = db.perfil.ocupacion !== d.ocupacion.trim();
       db.perfil.ocupacion = d.ocupacion.trim();
       guardar();
-      aviso("Perfil guardado ✓");
+      aviso(cambioOficio && db.perfil.ocupacion ? `Perfil guardado. La app se ajustó para ${db.perfil.ocupacion}` : "Perfil guardado");
     },
   },
 
@@ -275,7 +278,7 @@ export const vistaMas = {
 
     exportar() {
       descargar(`obralist-respaldo-${hoy()}.json`, JSON.stringify(db, null, 2), "application/json");
-      aviso("Respaldo descargado ✓");
+      aviso("Respaldo descargado");
     },
 
     reiniciar() {
@@ -296,7 +299,7 @@ export const vistaMas = {
         if (!confirm("Esto reemplaza TODOS tus datos actuales por los del respaldo. ¿Continuar?")) return;
         reemplazarTodo(o);
         refrescar();
-        aviso("Respaldo restaurado ✓");
+        aviso("Respaldo restaurado");
       } catch {
         aviso("Ese archivo no es un respaldo de ObraList");
       } finally {

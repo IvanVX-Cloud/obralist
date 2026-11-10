@@ -35,20 +35,20 @@
           <span class="marca-lema">Materiales y gastos de obra</span>
         </span>
       </a>
-      <button id="btnInstalar" type="button" class="instalar" hidden>📲 Instalar</button>
+      <button id="btnInstalar" type="button" class="instalar" hidden><span data-icono="descargar"></span>Instalar</button>
     </div>
-    <p id="ayudaIos" class="sub" hidden>En iPhone: toca Compartir ⬆️ y luego "Agregar a inicio".</p>
+    <p id="ayudaIos" class="sub" hidden>En iPhone: toca Compartir y luego "Agregar a inicio".</p>
   </header>
 
   <!-- Aquí app.js pinta la pantalla que toque según la URL (#/listas, #/catalogo…) -->
   <main id="vista" class="contenedor"></main>
 
   <nav class="tabs" aria-label="Secciones">
-    <a href="#/listas" data-tab="listas"><span>📋</span>Listas</a>
-    <a href="#/catalogo" data-tab="catalogo"><span>📦</span>Catálogo</a>
-    <a href="#/historial" data-tab="historial"><span>🧾</span>Compras</a>
-    <a href="#/gastos" data-tab="gastos"><span>📊</span>Gastos</a>
-    <a href="#/mas" data-tab="mas"><span>⚙️</span>Más</a>
+    <a href="#/listas" data-tab="listas"><span data-icono="listas"></span>Listas</a>
+    <a href="#/catalogo" data-tab="catalogo"><span data-icono="catalogo"></span>Catálogo</a>
+    <a href="#/historial" data-tab="historial"><span data-icono="compras"></span>Compras</a>
+    <a href="#/gastos" data-tab="gastos"><span data-icono="gastos"></span>Gastos</a>
+    <a href="#/mas" data-tab="mas"><span data-icono="mas"></span>Más</a>
   </nav>
 
   <!-- Ventana para formularios (la usa ui.js) y avisos flotantes -->

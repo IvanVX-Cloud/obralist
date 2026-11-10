@@ -2,7 +2,7 @@
 // config.js — Datos de la app que puedes cambiar fácilmente.
 // =====================================================================
 
-export const VERSION_APP = "1.2.0";
+export const VERSION_APP = "1.3.0";
 
 // Contacto de soporte. Deja un campo vacío ("") para que no aparezca.
 export const SOPORTE = {

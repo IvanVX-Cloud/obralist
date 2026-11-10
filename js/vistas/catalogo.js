@@ -1,7 +1,8 @@
 // =====================================================================
 // Catálogo: tus materiales con su precio, y dónde salen más baratos.
 // =====================================================================
-import { db, guardar, nuevoId, buscar, categoria, unidad, historialPrecios } from "../datos.js";
+import { db, guardar, nuevoId, buscar, categoria, unidad, historialPrecios, categoriasOrdenadas, esDeMiOficio } from "../datos.js";
+import { icono } from "../iconos.js";
 import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, mostrar, simbolo, aMoneda, aColones, precioEditado } from "../ui.js";
 
 let filtroCategoria = "";
@@ -12,17 +13,18 @@ export const vistaCatalogo = {
   render() {
     const productos = db.productos
       .filter((p) => !filtroCategoria || p.categoriaId === filtroCategoria)
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+      // los materiales de tu oficio primero, luego en orden alfabético
+      .sort((a, b) => (esDeMiOficio(b.categoriaId) - esDeMiOficio(a.categoriaId)) || a.nombre.localeCompare(b.nombre, "es"));
     return `
       <div class="encabezado">
         <h2>Catálogo de materiales</h2>
         <button class="principal" data-accion="nuevo">+ Producto</button>
       </div>
       <div class="fila filtros">
-        <input type="search" placeholder="🔍 Buscar material…" data-entrada="buscar" aria-label="Buscar material">
+        <input type="search" placeholder="Buscar material…" data-entrada="buscar" aria-label="Buscar material">
         <select data-cambio="categoria" aria-label="Filtrar por categoría">
           <option value="">Todas las categorías</option>
-          ${opcionesDe(db.categorias, filtroCategoria, (c) => `${c.icono} ${c.nombre}`)}
+          ${opcionesDe(categoriasOrdenadas(), filtroCategoria, (c) => c.nombre)}
         </select>
       </div>
       <section class="tarjeta">
@@ -60,7 +62,7 @@ export const vistaCatalogo = {
       const p = productoDe(el);
       const h = historialPrecios(p.id);
       const u = unidad(p.unidadId).abrev;
-      mostrar(`📈 ${p.nombre}`, h.length ? `
+      mostrar(`Historial de precios: ${p.nombre}`, h.length ? `
         <table>
           <thead><tr><th>Fecha</th><th>Dónde</th><th class="num">Precio / ${seguro(u)}</th></tr></thead>
           <tbody>${h.map((x) => `<tr><td>${fecha(x.fecha)}</td><td>${seguro(x.proveedor)}</td><td class="num">${dinero(x.precio)}</td></tr>`).join("")}</tbody>
@@ -85,7 +87,7 @@ export const vistaCatalogo = {
       if (existente) existente.cantidad += d.cantidad;
       else l.items.push({ id: nuevoId(), productoId: p.id, nombre: p.nombre, categoriaId: p.categoriaId, unidadId: p.unidadId, cantidad: d.cantidad, precio: p.precio, estado: "pendiente" });
       guardar();
-      aviso(`Agregado a "${l.nombre}" ✓`);
+      aviso(`Agregado a "${l.nombre}"`);
     },
   },
 };
@@ -109,14 +111,14 @@ function filaProducto(p) {
   return `
     <div class="producto" data-id="${p.id}" data-texto="${seguro(p.nombre.toLowerCase())}">
       <div>
-        <div class="nombre">${c.icono} ${seguro(p.nombre)}</div>
-        <div class="detalle">${dinero(p.precio)} / ${seguro(u.abrev)}${barato ? ` · 💡 Más barato en ${seguro(barato.proveedor)}: ${dinero(barato.precio)}` : ""}</div>
+        <div class="nombre">${icono(c.icono, "icono-acento")} ${seguro(p.nombre)}</div>
+        <div class="detalle">${dinero(p.precio)} / ${seguro(u.abrev)}${barato ? ` · Más barato en ${seguro(barato.proveedor)}: ${dinero(barato.precio)}` : ""}</div>
       </div>
       <div class="botones">
-        <button data-accion="aLista" title="Agregar a una lista" aria-label="Agregar a una lista">➕</button>
-        <button data-accion="precios" title="Historial de precios" aria-label="Historial de precios">📈</button>
-        <button data-accion="editar" title="Editar" aria-label="Editar">✏️</button>
-        <button data-accion="borrar" title="Borrar" aria-label="Borrar">🗑️</button>
+        <button data-accion="aLista" title="Agregar a una lista" aria-label="Agregar a una lista">${icono("agregarLista")}</button>
+        <button data-accion="precios" title="Historial de precios" aria-label="Historial de precios">${icono("tendencia")}</button>
+        <button data-accion="editar" title="Editar" aria-label="Editar">${icono("editar")}</button>
+        <button data-accion="borrar" title="Borrar" aria-label="Borrar">${icono("borrar")}</button>
       </div>
     </div>`;
 }
@@ -126,7 +128,7 @@ async function editarProducto(p) {
     titulo: p ? "Editar producto" : "Nuevo producto",
     campos: [
       { nombre: "nombre", etiqueta: "Nombre", valor: p?.nombre, requerido: true, ancho: true, ayuda: "Ej. Cable THW calibre 12 (rollo 100 m)" },
-      { nombre: "categoriaId", etiqueta: "Categoría", tipo: "select", valor: p?.categoriaId || filtroCategoria, opciones: db.categorias.map((c) => ({ valor: c.id, texto: `${c.icono} ${c.nombre}` })) },
+      { nombre: "categoriaId", etiqueta: "Categoría", tipo: "select", valor: p?.categoriaId || filtroCategoria, opciones: categoriasOrdenadas().map((c) => ({ valor: c.id, texto: c.nombre })) },
       { nombre: "unidadId", etiqueta: "Unidad", tipo: "select", valor: p?.unidadId, opciones: db.unidades.map((u) => ({ valor: u.id, texto: `${u.nombre} (${u.abrev})` })) },
       { nombre: "precio", etiqueta: `Precio unitario (${simbolo()})`, tipo: "number", valor: p ? aMoneda(p.precio) : "" },
     ],
@@ -136,5 +138,5 @@ async function editarProducto(p) {
   if (p) Object.assign(p, d);
   else db.productos.push({ id: nuevoId(), ...d });
   guardar(); refrescar();
-  aviso(p ? "Producto actualizado" : "Producto agregado ✓");
+  aviso(p ? "Producto actualizado" : "Producto agregado");
 }

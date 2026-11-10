@@ -7,10 +7,11 @@
 //   calcular(v) → recibe los valores y devuelve { resumen, materiales, nota }
 // Para agregar una calculadora nueva, sólo agrega otro objeto a CALCULADORAS.
 //
-// ⚠️ Los rendimientos son APROXIMADOS (valores típicos de obra). Ajústalos
+// OJO: los rendimientos son APROXIMADOS (valores típicos de obra). Ajústalos
 // a tu experiencia cambiando los números de este archivo.
 // =====================================================================
 import { db, guardar, buscar, nuevoId, hoy, agregarALista } from "../datos.js";
+import { icono } from "../iconos.js";
 import { seguro, formulario, aviso, refrescar, ir } from "../ui.js";
 
 const DESPERDICIO = 1.05; // +5 %
@@ -31,7 +32,7 @@ const CABLES = [[14, 15, 8.28], [12, 20, 5.21], [10, 30, 3.28], [8, 40, 2.06], [
 
 export const CALCULADORAS = {
   concreto: {
-    titulo: "Concreto", icono: "🏗️", descripcion: "Losas, contrapisos, aceras, vigas y columnas",
+    titulo: "Concreto", icono: "capas", descripcion: "Losas, contrapisos, aceras, vigas y columnas",
     oficios: ["Albañil", "Maestro de obras", "Contratista", "Ingeniero/a", "Arquitecto/a"],
     campos: [
       { nombre: "largo", etiqueta: "Largo (m)", tipo: "number", valor: 3 },
@@ -59,7 +60,7 @@ export const CALCULADORAS = {
   },
 
   block: {
-    titulo: "Pared de block", icono: "🧱", descripcion: "Cuántos blocks y mortero para una pared",
+    titulo: "Pared de block", icono: "ladrillos", descripcion: "Cuántos blocks y mortero para una pared",
     oficios: ["Albañil", "Maestro de obras", "Contratista"],
     campos: [
       { nombre: "largo", etiqueta: "Largo de la pared (m)", tipo: "number", valor: 5 },
@@ -83,7 +84,7 @@ export const CALCULADORAS = {
   },
 
   repello: {
-    titulo: "Repello", icono: "🪣", descripcion: "Sacos de repello para paredes",
+    titulo: "Repello", icono: "llana", descripcion: "Sacos de repello para paredes",
     oficios: ["Albañil", "Maestro de obras", "Contratista"],
     campos: [
       { nombre: "area", etiqueta: "Área de pared (m²)", tipo: "number", valor: 12.5 },
@@ -105,7 +106,7 @@ export const CALCULADORAS = {
   },
 
   pintura: {
-    titulo: "Pintura", icono: "🎨", descripcion: "Galones y cubetas por área",
+    titulo: "Pintura", icono: "rodillo", descripcion: "Galones y cubetas por área",
     oficios: ["Pintor", "Maestro de obras", "Contratista"],
     campos: [
       { nombre: "area", etiqueta: "Área a pintar (m²)", tipo: "number", valor: 60 },
@@ -128,7 +129,7 @@ export const CALCULADORAS = {
   },
 
   piso: {
-    titulo: "Piso cerámico", icono: "🔲", descripcion: "Cerámica, pegamento y fragua",
+    titulo: "Piso cerámico", icono: "cuadricula", descripcion: "Cerámica, pegamento y fragua",
     oficios: ["Enchapador", "Albañil", "Maestro de obras", "Contratista"],
     campos: [
       { nombre: "largo", etiqueta: "Largo (m)", tipo: "number", valor: 4 },
@@ -150,7 +151,7 @@ export const CALCULADORAS = {
   },
 
   cable: {
-    titulo: "Calibre de cable", icono: "⚡", descripcion: "Qué cable usar según amperios y distancia",
+    titulo: "Calibre de cable", icono: "rayo", descripcion: "Qué cable usar según amperios y distancia",
     oficios: ["Electricista", "Ingeniero/a", "Contratista"],
     campos: [
       { nombre: "amperios", etiqueta: "Breaker / carga (A)", tipo: "select", valor: "20", opciones:
@@ -200,6 +201,13 @@ let valores = {};       // lo último que escribió el usuario
 let resultado = null;   // el último cálculo
 let listaDestino = null;
 
+// Abrir directamente una calculadora (desde los accesos del inicio).
+export function prepararCalculadora(clave) {
+  elegida = CALCULADORAS[clave] ? clave : null;
+  valores = {};
+  resultado = null;
+}
+
 export const vistaCalculadoras = {
   tab: "listas",
 
@@ -207,28 +215,29 @@ export const vistaCalculadoras = {
     listaDestino = buscar("listas", listaId) || null;
     const calc = elegida && CALCULADORAS[elegida];
     return `
-      <a href="${listaDestino ? `#/lista/${listaDestino.id}` : "#/listas"}" class="volver">← ${listaDestino ? seguro(listaDestino.nombre) : "Mis listas"}</a>
-      <div class="encabezado"><h2>🧮 Calculadoras de obra</h2></div>
+      <a href="${listaDestino ? `#/lista/${listaDestino.id}` : "#/listas"}" class="volver">${icono("volver")} ${listaDestino ? seguro(listaDestino.nombre) : "Mis listas"}</a>
+      <div class="encabezado"><h2>${icono("calculadora")}Calculadoras de obra</h2></div>
       ${listaDestino ? `<p class="nota">Los resultados se agregan a <strong>${seguro(listaDestino.nombre)}</strong>.</p>` : ""}
 
       <div class="calculadoras">
         ${ordenadas().map(([clave, c]) => `
           <button class="calc-opcion ${clave === elegida ? "activa" : ""}" data-accion="elegir" data-calc="${clave}">
-            <span class="calc-icono">${c.icono}</span>
+            <span class="calc-icono">${icono(c.icono, "icono-grande icono-acento")}</span>
             <strong>${c.titulo}</strong>
+            ${c.oficios.includes(db.perfil.ocupacion) ? `<span class="etiqueta-oficio">Para tu oficio</span>` : ""}
             <span class="nota">${c.descripcion}</span>
           </button>`).join("")}
       </div>
 
       ${calc ? `
         <section class="tarjeta">
-          <h3>${calc.icono} ${calc.titulo}</h3>
+          <h3>${icono(calc.icono)}${calc.titulo}</h3>
           <form data-form="calcular" class="formulario">
             ${calc.campos.map((c) => campo(c, valores[c.nombre] ?? c.valor)).join("")}
             <button class="principal ancho">Calcular</button>
           </form>
         </section>
-        ${resultado ? tarjetaResultado(resultado) : ""}` : `<p class="nota centro">Elige una calculadora 👆</p>`}`;
+        ${resultado ? tarjetaResultado(resultado) : ""}` : `<p class="nota centro">Elige una calculadora</p>`}`;
   },
 
   acciones: {
@@ -258,7 +267,7 @@ export const vistaCalculadoras = {
       }
       const n = agregarALista(lista, resultado.materiales);
       guardar();
-      aviso(`${n} materiales agregados a "${lista.nombre}" ✓`);
+      aviso(`${n} materiales agregados a "${lista.nombre}"`);
       ir(`#/lista/${lista.id}`);
     },
   },
@@ -287,14 +296,14 @@ function tarjetaResultado(r) {
   const materiales = r.materiales.filter((m) => m.cantidad > 0);
   return `
     <section class="tarjeta resultado">
-      <h3>✅ Necesitas</h3>
+      <h3>${icono("check")}Necesitas</h3>
       <p class="nota">${seguro(r.resumen)}</p>
       <table>
         <tbody>${materiales.map((m) => `<tr><td>${seguro(m.nombre)}</td><td class="num"><strong>${num(m.cantidad)}</strong> ${seguro(m.unidad)}</td></tr>`).join("")}</tbody>
       </table>
-      ${r.nota ? `<p class="nota" style="margin-top:8px">ℹ️ ${seguro(r.nota)}</p>` : ""}
+      ${r.nota ? `<p class="nota" style="margin-top:8px">${icono("info")} ${seguro(r.nota)}</p>` : ""}
       <button class="principal ancho-total" style="margin-top:12px" data-accion="agregar">
-        ➕ Agregar ${listaDestino ? `a "${seguro(listaDestino.nombre)}"` : "a una lista"}
+        ${icono("agregarLista")}Agregar ${listaDestino ? `a "${seguro(listaDestino.nombre)}"` : "a una lista"}
       </button>
     </section>`;
 }

@@ -9,7 +9,7 @@
 
 export const PLANTILLAS = [
   {
-    id: "electrica-casa", titulo: "⚡ Instalación eléctrica casa 2 habitaciones",
+    id: "electrica-casa", titulo: "Instalación eléctrica casa 2 habitaciones",
     oficios: ["Electricista", "Contratista", "Ingeniero/a"],
     materiales: [
       ["Cable THHN #12 (rollo 100 m)", 2, "Eléctrico", "rollo"],
@@ -26,7 +26,7 @@ export const PLANTILLAS = [
     ],
   },
   {
-    id: "circuito", titulo: "⚡ Agregar un circuito nuevo",
+    id: "circuito", titulo: "Agregar un circuito nuevo",
     oficios: ["Electricista"],
     materiales: [
       ["Cable THHN #12 (rollo 100 m)", 1, "Eléctrico", "rollo"],
@@ -39,7 +39,7 @@ export const PLANTILLAS = [
     ],
   },
   {
-    id: "bano", titulo: "🚰 Plomería de baño completo",
+    id: "bano", titulo: "Plomería de baño completo",
     oficios: ["Fontanero", "Contratista", "Maestro de obras"],
     materiales: [
       ["Tubo PVC agua potable 1/2\" (6 m)", 4, "Plomería", "tubo"],
@@ -50,7 +50,7 @@ export const PLANTILLAS = [
     ],
   },
   {
-    id: "pared", titulo: "🧱 Pared de block 15 (10 m²)",
+    id: "pared", titulo: "Pared de block 15 (10 m²)",
     oficios: ["Albañil", "Maestro de obras", "Contratista"],
     materiales: [
       ["Block 15x20x40", 132, "Obra negra", "und"],
@@ -61,7 +61,7 @@ export const PLANTILLAS = [
     ],
   },
   {
-    id: "piso", titulo: "🔲 Enchape de piso (20 m²)",
+    id: "piso", titulo: "Enchape de piso (20 m²)",
     oficios: ["Enchapador", "Albañil", "Maestro de obras"],
     materiales: [
       ["Piso cerámico", 22, "Acabados", "m²"],
@@ -71,7 +71,7 @@ export const PLANTILLAS = [
     ],
   },
   {
-    id: "pintura", titulo: "🎨 Pintura de casa (60 m²)",
+    id: "pintura", titulo: "Pintura de casa (60 m²)",
     oficios: ["Pintor", "Maestro de obras", "Contratista"],
     materiales: [
       ["Pintura látex (cubeta 5 gal)", 1, "Acabados", "cubeta"],

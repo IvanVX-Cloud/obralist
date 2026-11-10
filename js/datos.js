@@ -15,6 +15,8 @@
 // Esto nos va a facilitar pasar todo a la nube (Supabase) más adelante.
 // =====================================================================
 
+import { iconoDesdeEmoji } from "./iconos.js";
+
 const CLAVE = "obralist-v2";
 const CLAVE_V1 = "obralist-v1"; // la versión anterior, para no perder datos
 
@@ -34,6 +36,35 @@ export const OCUPACIONES = [
   "Ferretería / Proveedor", "Dueño/a de la obra",
 ];
 
+// Oficios que se ofrecen al entrar por primera vez.
+export const OFICIOS_RAPIDOS = [
+  "Electricista", "Maestro de obras", "Albañil", "Fontanero", "Pintor",
+  "Enchapador", "Soldador / Herrero", "Carpintero", "Contratista",
+];
+
+// Las categorías que más usa cada oficio: se muestran primero en toda la app.
+export const CATEGORIAS_POR_OFICIO = {
+  "Electricista": ["Eléctrico"],
+  "Fontanero": ["Plomería"],
+  "Pintor": ["Acabados"],
+  "Enchapador": ["Acabados", "Obra negra"],
+  "Albañil": ["Obra negra", "Acabados"],
+  "Maestro de obras": ["Obra negra", "Acabados", "Plomería", "Eléctrico"],
+  "Soldador / Herrero": ["Herrería"],
+  "Carpintero": ["Carpintería"],
+};
+
+// Tus categorías, con las de tu oficio primero.
+export function categoriasOrdenadas() {
+  const prioridad = CATEGORIAS_POR_OFICIO[db.perfil.ocupacion] || [];
+  const rango = (c) => { const i = prioridad.indexOf(c.nombre); return i < 0 ? 100 + db.categorias.indexOf(c) : i; };
+  return [...db.categorias].sort((a, b) => rango(a) - rango(b));
+}
+
+// ¿Esta categoría es de las principales de mi oficio?
+export const esDeMiOficio = (categoriaId) =>
+  (CATEGORIAS_POR_OFICIO[db.perfil.ocupacion] || []).includes(categoria(categoriaId).nombre);
+
 // "Ivan (Electricista)", o sólo lo que haya.
 export function quienSoy(nombre, ocupacion) {
   const n = String(nombre || "").trim();
@@ -48,8 +79,8 @@ export const TIPOS_GASTO = [
 
 // ---------- Datos iniciales (semilla) ----------
 const CATEGORIAS_BASE = [
-  ["⚡", "Eléctrico"], ["🧱", "Obra negra"], ["🚰", "Plomería"], ["🎨", "Acabados"],
-  ["🔩", "Herrería"], ["🪚", "Carpintería"], ["🛠️", "Herramienta"], ["📦", "Otro"],
+  ["rayo", "Eléctrico"], ["ladrillos", "Obra negra"], ["gota", "Plomería"], ["rodillo", "Acabados"],
+  ["llama", "Herrería"], ["martillo", "Carpintería"], ["llave", "Herramienta"], ["caja", "Otro"],
 ];
 
 const UNIDADES_BASE = [
@@ -58,7 +89,7 @@ const UNIDADES_BASE = [
   ["Galón", "gal"], ["Cubeta", "cubeta"], ["Caja", "caja"], ["Litro", "L"],
 ];
 
-// Tipo de cambio inicial (colones por 1 dólar). Se cambia en ⚙️ Más.
+// Tipo de cambio inicial (colones por 1 dólar). Se cambia en Más > Moneda.
 export const TIPO_CAMBIO_INICIAL = 505;
 
 // Catálogo de ejemplo para Costa Rica: [nombre, categoría, unidad, precio en COLONES].
@@ -138,9 +169,10 @@ const PRODUCTOS_ANTERIORES = [
 
 function vacio() {
   return {
-    version: 3, perfil: { nombre: "", ocupacion: "", moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL },
+    version: 4, perfil: { nombre: "", ocupacion: "", moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL },
     categorias: [], unidades: [], productos: [], proveedores: [],
     listas: [], compras: [], gastos: [],
+    bitacora: [], // notas diarias de cada obra (las fotos van aparte, en fotos.js)
   };
 }
 
@@ -160,7 +192,7 @@ export function semilla() {
 function idCategoria(d, nombre) {
   const n = String(nombre || "Otro").trim();
   let c = d.categorias.find((x) => x.nombre.toLowerCase() === n.toLowerCase());
-  if (!c) { c = { id: nuevoId(), icono: "📦", nombre: n }; d.categorias.push(c); }
+  if (!c) { c = { id: nuevoId(), icono: "etiqueta", nombre: n }; d.categorias.push(c); }
   return c.id;
 }
 
@@ -213,8 +245,16 @@ function migrarACostaRica(d) {
   return d;
 }
 
+// Versión 3 → 4: íconos de línea en vez de emojis, y la bitácora.
+function migrarAIconos(d) {
+  for (const c of d.categorias) c.icono = iconoDesdeEmoji(c.icono);
+  d.bitacora = d.bitacora || [];
+  d.version = 4;
+}
+
 function actualizar(d) {
   if ((d.version || 2) < 3) migrarACostaRica(d);
+  if (d.version < 4) migrarAIconos(d);
   return d;
 }
 
@@ -250,7 +290,7 @@ export function esRespaldoValido(o) {
 
 // ---------- Consultas (atajos para buscar cosas) ----------
 export const buscar = (coleccion, id) => db[coleccion].find((x) => x.id === id);
-export const categoria = (id) => buscar("categorias", id) || { icono: "📦", nombre: "Sin categoría" };
+export const categoria = (id) => buscar("categorias", id) || { icono: "etiqueta", nombre: "Sin categoría" };
 export const unidad = (id) => buscar("unidades", id) || { nombre: "?", abrev: "?" };
 export const asegurarCategoria = (nombre) => idCategoria(db, nombre);
 export const asegurarUnidad = (abrev) => idUnidad(db, abrev);

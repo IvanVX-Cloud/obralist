@@ -3,6 +3,7 @@
 // de equipo…) y gráficas de en qué se va el dinero.
 // =====================================================================
 import { db, guardar, nuevoId, hoy, buscar, categoria, totalesLista, TIPOS_GASTO } from "../datos.js";
+import { icono } from "../iconos.js";
 import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, barras, simbolo, aColones } from "../ui.js";
 
 let filtroLista = "";
@@ -23,7 +24,7 @@ export async function nuevoGasto(listaId = "") {
   if (!d) return;
   db.gastos.unshift({ id: nuevoId(), tipo: d.tipo, monto: aColones(d.monto), listaId: d.listaId || null, fecha: d.fecha, descripcion: d.descripcion });
   guardar(); refrescar();
-  aviso("Gasto guardado ✓");
+  aviso("Gasto guardado");
 }
 
 export const vistaGastos = {
@@ -39,7 +40,7 @@ export const vistaGastos = {
     const sumar = (mapa, clave, monto) => mapa.set(clave, (mapa.get(clave) || 0) + monto);
     const porCategoria = new Map(), porTipo = new Map(), porMes = new Map(), porProveedor = new Map();
     for (const c of compras) {
-      for (const i of c.items) { const cat = categoria(i.categoriaId); sumar(porCategoria, `${cat.icono} ${cat.nombre}`, i.cantidad * i.precio); }
+      for (const i of c.items) { const cat = categoria(i.categoriaId); sumar(porCategoria, cat.nombre, i.cantidad * i.precio); }
       sumar(porProveedor, buscar("proveedores", c.proveedorId)?.nombre || "Sin proveedor", c.total);
       sumar(porMes, c.fecha.slice(0, 7), c.total);
     }
@@ -66,11 +67,11 @@ export const vistaGastos = {
       </section>
 
       ${filtroLista ? "" : `
-        <section class="tarjeta"><h3>🏗️ Por obra</h3>${reportePorObra()}</section>`}
-      <section class="tarjeta"><h3>🧱 Materiales por categoría</h3>${barras([...porCategoria])}</section>
-      <section class="tarjeta"><h3>💸 Otros gastos por tipo</h3>${barras([...porTipo])}</section>
-      <section class="tarjeta"><h3>🏪 Por proveedor</h3>${barras([...porProveedor])}</section>
-      <section class="tarjeta"><h3>📅 Por mes (últimos 6)</h3>${barras(meses, { ordenar: false })}</section>
+        <section class="tarjeta"><h3>${icono("casco")}Por obra</h3>${reportePorObra()}</section>`}
+      <section class="tarjeta"><h3>${icono("ladrillos")}Materiales por categoría</h3>${barras([...porCategoria])}</section>
+      <section class="tarjeta"><h3>${icono("billetera")}Otros gastos por tipo</h3>${barras([...porTipo])}</section>
+      <section class="tarjeta"><h3>${icono("tienda")}Por proveedor</h3>${barras([...porProveedor])}</section>
+      <section class="tarjeta"><h3>${icono("gastos")}Por mes (últimos 6)</h3>${barras(meses, { ordenar: false })}</section>
 
       <section class="tarjeta">
         <h3>Otros gastos registrados</h3>
@@ -117,6 +118,6 @@ function filaGasto(g) {
         <div class="nombre">${seguro(g.tipo)}${g.descripcion ? ` · ${seguro(g.descripcion)}` : ""}</div>
         <div class="detalle">${fecha(g.fecha)}${obra ? ` · ${seguro(obra)}` : ""}</div>
       </div>
-      <div class="botones"><strong>${dinero(g.monto)}</strong><button data-accion="borrar" aria-label="Borrar gasto">🗑️</button></div>
+      <div class="botones"><strong>${dinero(g.monto)}</strong><button data-accion="borrar" aria-label="Borrar gasto">${icono("borrar")}</button></div>
     </div>`;
 }

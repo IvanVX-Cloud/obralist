@@ -2,6 +2,7 @@
 // Historial de compras: cada vez que "finalizas una compra" queda aquí.
 // =====================================================================
 import { db, guardar, buscar, unidad } from "../datos.js";
+import { icono } from "../iconos.js";
 import { dinero, seguro, fecha, refrescar, opcionesDe, aviso } from "../ui.js";
 
 let filtroLista = "";
@@ -27,7 +28,7 @@ export const vistaHistorial = {
         <div class="dato"><span>Total gastado en materiales</span><strong>${dinero(total)}</strong></div>
       </section>
       ${compras.length ? compras.map(tarjetaCompra).join("")
-        : `<p class="vacio">Aún no hay compras. Dentro de una lista, marca ☑️ los materiales y toca "Finalizar compra".</p>`}`;
+        : `<p class="vacio">Aún no hay compras. Dentro de una lista, marca la casilla de los materiales y toca "Finalizar compra".</p>`}`;
   },
 
   cambios: {
@@ -74,7 +75,7 @@ function tarjetaCompra(c) {
             </tr>`).join("")}
         </tbody>
       </table>
-      ${c.nota ? `<p class="nota">📝 ${seguro(c.nota)}</p>` : ""}
-      <div class="fila fin"><button class="peligro" data-accion="borrar">🗑️ Borrar compra</button></div>
+      ${c.nota ? `<p class="nota">Nota: ${seguro(c.nota)}</p>` : ""}
+      <div class="fila fin"><button class="peligro" data-accion="borrar">${icono("borrar")}Borrar compra</button></div>
     </details>`;
 }
