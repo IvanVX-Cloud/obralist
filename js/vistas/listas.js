@@ -34,7 +34,7 @@ export const vistaListas = {
       : `<p class="nota"><a href="#/mas">Completa tu perfil</a> con tu nombre y ocupación.</p>`;
     return `
       ${saludo}
-      ${bloqueOficio()}
+      ${bloqueBienvenida()}
       <div class="encabezado">
         <h2>Mis listas de obra</h2>
         <button class="principal" data-accion="nueva">+ Nueva lista</button>
@@ -42,6 +42,8 @@ export const vistaListas = {
       ${propias.length
         ? `<div class="tarjetas">${propias.map(tarjetaLista).join("")}</div>`
         : `<p class="vacio">Crea tu primera lista, por ejemplo "Instalación eléctrica Casa López".</p>`}
+
+      ${bloqueHerramientas()}
 
       <div class="encabezado">
         <h2>${icono("recibida")}Recibidas</h2>
@@ -473,8 +475,22 @@ export function llenarConVoz(texto) {
   f.nombre.focus();
 }
 
-// Arriba en el inicio: pregunta el oficio, o muestra accesos rápidos para ese oficio.
-function bloqueOficio() {
+// Arriba en el inicio, sólo si todavía no eligió oficio.
+function bloqueBienvenida() {
+  if (db.perfil.ocupacion) return "";
+  return `
+    <section class="tarjeta bienvenida">
+      <h3>${icono("casco")}¿A qué te dedicas?</h3>
+      <p class="nota">Así ObraList te muestra primero tus materiales, calculadoras y plantillas.</p>
+      <div class="oficios">
+        ${OFICIOS_RAPIDOS.map((o) => `<button data-accion="elegirOficio" data-oficio="${seguro(o)}">${seguro(o)}</button>`).join("")}
+        <a class="boton" href="#/mas">Otro…</a>
+      </div>
+    </section>`;
+}
+
+// Debajo de las listas: calculadoras y accesos rápidos según el oficio.
+function bloqueHerramientas() {
   const oficio = db.perfil.ocupacion;
   const todasLasCalc = `
     <a class="atajo" href="#/calculadoras">
@@ -483,18 +499,7 @@ function bloqueOficio() {
       ${icono("adelante")}
     </a>`;
 
-  if (!oficio) {
-    return `
-      <section class="tarjeta bienvenida">
-        <h3>${icono("casco")}¿A qué te dedicas?</h3>
-        <p class="nota">Así ObraList te muestra primero tus materiales, calculadoras y plantillas.</p>
-        <div class="oficios">
-          ${OFICIOS_RAPIDOS.map((o) => `<button data-accion="elegirOficio" data-oficio="${seguro(o)}">${seguro(o)}</button>`).join("")}
-          <a class="boton" href="#/mas">Otro…</a>
-        </div>
-      </section>
-      ${todasLasCalc}`;
-  }
+  if (!oficio) return todasLasCalc;
 
   const calcs = Object.entries(CALCULADORAS).filter(([, c]) => c.oficios.includes(oficio)).slice(0, 3);
   const plantillas = PLANTILLAS.filter((p) => p.oficios.includes(oficio)).slice(0, 2);
