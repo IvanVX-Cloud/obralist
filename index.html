@@ -1,0 +1,49 @@
+<!doctype html>
+<!--
+  ObraList — Estructura (HTML)
+  Esta página es sólo el "esqueleto": barra superior, un espacio para la
+  pantalla activa (#vista) y las pestañas de abajo. El contenido de cada
+  pantalla lo dibujan los archivos en js/vistas/.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ObraList</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- PWA: nombre, ícono y colores para instalarla en el celular -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#e8892b">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ObraList">
+</head>
+<body>
+  <header class="barra">
+    <div class="barra-interior">
+      <h1>🧱 ObraList</h1>
+      <button id="btnInstalar" type="button" class="instalar" hidden>📲 Instalar</button>
+    </div>
+    <p id="ayudaIos" class="sub" hidden>En iPhone: toca Compartir ⬆️ y luego "Agregar a inicio".</p>
+  </header>
+
+  <!-- Aquí app.js pinta la pantalla que toque según la URL (#/listas, #/catalogo…) -->
+  <main id="vista" class="contenedor"></main>
+
+  <nav class="tabs" aria-label="Secciones">
+    <a href="#/listas" data-tab="listas"><span>📋</span>Listas</a>
+    <a href="#/catalogo" data-tab="catalogo"><span>📦</span>Catálogo</a>
+    <a href="#/historial" data-tab="historial"><span>🧾</span>Compras</a>
+    <a href="#/gastos" data-tab="gastos"><span>📊</span>Gastos</a>
+    <a href="#/mas" data-tab="mas"><span>⚙️</span>Más</a>
+  </nav>
+
+  <!-- Ventana para formularios (la usa ui.js) y avisos flotantes -->
+  <dialog id="dialogo"></dialog>
+  <div id="aviso" role="status" hidden></div>
+
+  <!-- type="module" permite dividir el código en varios archivos con import/export -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

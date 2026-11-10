@@ -1,0 +1,177 @@
+/* ObraList — Aspecto (CSS)
+   Las "variables" (--algo) guardan colores para cambiarlos en un solo lugar. */
+:root {
+  --fondo: #f4f1ec;
+  --tarjeta: #ffffff;
+  --texto: #1f2328;
+  --suave: #6b6f76;
+  --acento: #e8892b;      /* naranja de seguridad */
+  --borde: #e2ddd5;
+  --peligro: #c0392b;
+  --ok: #2e8b57;
+  --carrito: #fff1df;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #17181a;
+    --tarjeta: #222428;
+    --texto: #ecebe8;
+    --suave: #9a9ea6;
+    --borde: #34373c;
+    --carrito: #3a2b18;
+    --peligro: #e5675a;
+    --ok: #4cb37a;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  padding-bottom: 150px; /* espacio para pestañas y barra del carrito */
+}
+a { color: var(--acento); }
+
+/* ---------- Barra superior ---------- */
+.barra { background: var(--acento); color: #1b1300; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); }
+.barra-interior { max-width: 860px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.barra h1 { margin: 0; font-size: 1.3rem; }
+.sub { max-width: 860px; margin: 6px auto 0; font-size: .9rem; }
+.instalar { background: #1b1300; color: #fff; border: none; font-weight: 600; }
+[hidden] { display: none !important; }
+
+/* ---------- Estructura ---------- */
+.contenedor { max-width: 860px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.encabezado { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.encabezado h2, .encabezado h3 { margin: 0; }
+h2 { font-size: 1.2rem; }
+.titulo-lista { margin: 0; font-size: 1.35rem; }
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 16px; }
+.tarjeta h3 { margin: 0 0 10px; font-size: 1rem; }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 10px; }
+a.tarjeta { color: inherit; text-decoration: none; display: grid; gap: 6px; }
+a.tarjeta:hover { border-color: var(--acento); }
+.nota { color: var(--suave); font-size: .85rem; margin: 0; }
+.centro { text-align: center; }
+.vacio { color: var(--suave); text-align: center; padding: 20px 0; margin: 0; }
+.rojo { color: var(--peligro); }
+.volver { color: var(--suave); text-decoration: none; }
+.etiqueta { font-size: .7rem; background: var(--acento); color: #1b1300; padding: 2px 8px; border-radius: 99px; vertical-align: middle; }
+.fila { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.fila.entre { justify-content: space-between; }
+.fila.fin { justify-content: flex-end; grid-column: 1 / -1; margin-top: 8px; }
+.fila > input { flex: 1; min-width: 160px; }
+.filtros > * { flex: 1; min-width: 160px; }
+details summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 8px; }
+
+/* ---------- Controles ---------- */
+input, select, button, textarea, label.boton {
+  font: inherit; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto);
+}
+button, label.boton { cursor: pointer; }
+button:hover, label.boton:hover { border-color: var(--acento); }
+button.principal { background: var(--acento); color: #1b1300; border: none; font-weight: 600; }
+button.peligro { color: var(--peligro); }
+.acciones-lista { display: flex; flex-wrap: wrap; gap: 6px; }
+.ancho-total { width: 100%; padding: 12px; }
+.pasos { margin: 0 0 8px; padding-left: 20px; line-height: 1.6; }
+.acciones-lista > * { font-size: .85rem; }
+
+/* ---------- Resumen y barras ---------- */
+.resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.resumen.dos { grid-template-columns: repeat(2, 1fr); }
+.dato { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px; }
+.dato span { display: block; color: var(--suave); font-size: .8rem; }
+.dato strong { font-size: 1.15rem; }
+.barra-progreso { height: 8px; background: var(--borde); border-radius: 99px; overflow: hidden; margin: 6px 0; }
+.barra-progreso > div { height: 100%; background: var(--ok); }
+.barra-progreso.pasado > div { background: var(--peligro); }
+.barra-fila { display: grid; grid-template-columns: minmax(90px, 1fr) 2fr auto; gap: 8px; align-items: center; margin: 6px 0; font-size: .9rem; }
+.barra { height: 10px; background: var(--borde); border-radius: 99px; overflow: hidden; }
+.barra > div { height: 100%; background: var(--acento); border-radius: 99px; }
+
+/* ---------- Formularios ---------- */
+.formulario { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.formulario label { display: grid; gap: 4px; font-size: .85rem; color: var(--suave); min-width: 0; }
+.formulario input, .formulario select, .formulario textarea { width: 100%; min-width: 0; }
+.dato { min-width: 0; overflow-wrap: anywhere; }
+.formulario .ancho, .formulario h2 { grid-column: 1 / -1; }
+.formulario label.check { display: flex; align-items: center; gap: 8px; }
+.formulario label.check input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--acento); }
+
+/* ---------- Materiales de una lista ---------- */
+.grupo { margin-top: 12px; }
+.grupo h4 { font-size: .9rem; margin: 0 0 4px; display: flex; justify-content: space-between; color: var(--suave); }
+.item {
+  display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 8px; align-items: center;
+  padding: 8px 4px; border-top: 1px solid var(--borde); border-radius: 6px;
+}
+.item.carrito { background: var(--carrito); }
+.item input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--acento); }
+.item input[type="number"] { width: 72px; padding: 4px 6px; }
+.nombre-item { background: none; border: none; padding: 0; text-align: left; display: grid; color: inherit; }
+.item.comprado .nombre { text-decoration: line-through; color: var(--suave); }
+.detalle { font-size: .8rem; color: var(--suave); }
+.importe { font-weight: 600; min-width: 80px; text-align: right; }
+.cant { font-size: .85rem; color: var(--suave); }
+.palomita { color: var(--ok); font-weight: 700; width: 22px; text-align: center; }
+.quitar { padding: 4px 8px; }
+
+.barra-carrito {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 72px; z-index: 5;
+  width: min(828px, calc(100% - 24px));
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  background: var(--texto); color: var(--fondo); padding: 10px 12px 10px 16px; border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+
+/* ---------- Filas genéricas (catálogo, gastos, ajustes) ---------- */
+.producto { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--borde); }
+.producto:first-of-type { border-top: none; }
+.botones { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+.botones button { padding: 4px 8px; }
+.compra summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; list-style: none; font-weight: normal; }
+.compra summary::-webkit-details-marker { display: none; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { padding: 6px 4px; border-top: 1px solid var(--borde); text-align: left; }
+th { color: var(--suave); font-weight: 600; }
+.num { text-align: right; white-space: nowrap; }
+
+/* ---------- Pestañas de abajo ---------- */
+.tabs {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 6;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  background: var(--tarjeta); border-top: 1px solid var(--borde);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tabs a { display: grid; justify-items: center; padding: 8px 0; font-size: .75rem; color: var(--suave); text-decoration: none; }
+.tabs a span { font-size: 1.3rem; }
+.tabs a.activa { color: var(--acento); font-weight: 700; }
+
+/* ---------- Ventanas y avisos ---------- */
+dialog {
+  border: 1px solid var(--borde); border-radius: 14px; background: var(--tarjeta); color: var(--texto);
+  width: min(520px, calc(100% - 32px)); max-height: 85vh; padding: 16px;
+}
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+dialog h2 { margin: 0 0 8px; }
+dialog .formulario { grid-template-columns: 1fr 1fr; }
+#aviso {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: 140px; z-index: 20;
+  background: var(--texto); color: var(--fondo); padding: 10px 16px; border-radius: 99px;
+  font-size: .9rem; max-width: calc(100% - 32px); text-align: center;
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 600px) {
+  .formulario { grid-template-columns: 1fr 1fr; }
+  .dato strong { font-size: .95rem; }
+  .item { grid-template-columns: auto 1fr 60px auto; }
+  .item .importe { grid-column: 2 / 4; text-align: left; min-width: 0; font-size: .85rem; }
+  .item .quitar { grid-row: 1; grid-column: 4; }
+  .item input[type="number"] { width: 60px; }
+}
