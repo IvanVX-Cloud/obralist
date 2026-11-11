@@ -18,7 +18,7 @@ import { SUPABASE } from "./config.js";
 import { aviso, refrescar, formulario, aplicarApariencia } from "./ui.js";
 
 // Versión fija de la librería de Supabase (se descarga sólo si hay internet)
-const URL_LIBRERIA = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
+const URL_LIBRERIA = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/+esm";
 const CLAVE_ESTADO = "obralist-sync";
 const COLECCIONES = ["categorias", "unidades", "productos", "proveedores", "listas", "compras", "gastos", "bitacora"];
 const LOTE = 500; // cuántas filas se suben por envío

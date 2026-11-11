@@ -9,8 +9,8 @@ export const VERSION_APP = "1.4.0";
 // Están en Supabase → Project Settings → API (o el botón "Connect").
 // ⚠ NUNCA pongas aquí la clave "service_role" / "secret": esa sí es secreta.
 export const SUPABASE = {
-  url: "",    // ej. "https://abcdefghijkl.supabase.co"
-  clave: "",  // la clave "anon" o "publishable"
+  url: "https://yejhysusnlnetfggdqum.supabase.co",
+  clave: "sb_publishable_b9oJmwRNe-mU8lkB--vd0Q_45kB_93D", // clave "publishable" (pública)
 };
 
 // Contacto de soporte. Deja un campo vacío ("") para que no aparezca.
