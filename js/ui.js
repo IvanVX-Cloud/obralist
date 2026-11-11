@@ -3,6 +3,27 @@
 // =====================================================================
 
 import { db, TIPO_CAMBIO_INICIAL } from "./datos.js";
+import { icono } from "./iconos.js";
+
+// ---------- Desplegables (secciones que se abren y cierran) ----------
+// Se recuerda cuáles abrió o cerró el usuario mientras la app está abierta,
+// así al volver a dibujar la pantalla no se cierran solos.
+const estadoDesplegables = new Map(); // id → true (abierto) / false (cerrado)
+export const recordarDesplegable = (id, abierto) => estadoDesplegables.set(id, abierto);
+export const desplegableAbierto = (id, porDefecto = false) =>
+  (estadoDesplegables.has(id) ? estadoDesplegables.get(id) : porDefecto);
+
+export function desplegable(id, { titulo, resumen = "", contenido, abierto = false, clase = "" }) {
+  return `
+    <details class="tarjeta plegable ${clase}" data-plegable="${id}" data-por-defecto="${abierto ? 1 : 0}" ${desplegableAbierto(id, abierto) ? "open" : ""}>
+      <summary>
+        <span class="plegable-titulo">${titulo}</span>
+        ${resumen ? `<span class="plegable-resumen">${resumen}</span>` : ""}
+        ${icono("adelante", "flecha")}
+      </summary>
+      <div class="plegable-contenido">${contenido}</div>
+    </details>`;
+}
 
 export const $ = (selector) => document.querySelector(selector);
 

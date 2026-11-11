@@ -9,7 +9,7 @@
 //   entradas       → mientras se escribe, en elementos con data-entrada="..."
 //   formularios    → al enviar un <form data-form="...">
 // =====================================================================
-import { $, alRefrescar, aplicarApariencia } from "./ui.js";
+import { $, alRefrescar, aplicarApariencia, recordarDesplegable } from "./ui.js";
 import { icono } from "./iconos.js";
 import { vistaListas, vistaLista } from "./vistas/listas.js";
 import { vistaCatalogo } from "./vistas/catalogo.js";
@@ -67,6 +67,14 @@ vista.addEventListener("input", (e) => {
   const f = el && actual.entradas?.[el.dataset.entrada];
   if (f) f(el, e);
 });
+
+// "toggle" no burbujea, por eso se escucha en fase de captura (el true del final).
+vista.addEventListener("toggle", (e) => {
+  const d = e.target;
+  if (!d.dataset?.plegable) return;
+  if (d.dataset.auto) { delete d.dataset.auto; return; } // lo abrió la búsqueda, no el usuario
+  recordarDesplegable(d.dataset.plegable, d.open);
+}, true);
 
 vista.addEventListener("submit", (e) => {
   const form = e.target.closest("form[data-form]");

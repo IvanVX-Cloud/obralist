@@ -2,15 +2,17 @@
 // "Más": perfil, cuenta, proveedores, categorías, unidades y respaldo.
 // =====================================================================
 import { db, guardar, nuevoId, hoy, buscar, reemplazarTodo, esRespaldoValido, semilla, OCUPACIONES } from "../datos.js";
-import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero, aplicarApariencia } from "../ui.js";
+import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero, aplicarApariencia, desplegable } from "../ui.js";
 
 // Tarjeta de apariencia: tema y modo obra.
 function tarjetaApariencia() {
   const tema = db.perfil.tema || "auto";
   const op = (v, t) => `<option value="${v}" ${tema === v ? "selected" : ""}>${t}</option>`;
-  return `
-    <section class="tarjeta">
-      <h3>${icono("apariencia")}Apariencia</h3>
+  const nombresTema = { auto: "Automático", claro: "Claro", oscuro: "Oscuro" };
+  return desplegable("mas:apariencia", {
+    titulo: `${icono("apariencia")}Apariencia`,
+    resumen: `${nombresTema[tema]}${db.perfil.modoObra ? " · Modo obra" : ""}`,
+    contenido: `
       <form data-form="apariencia" class="formulario">
         <label class="ancho">Tema
           <select name="tema">${op("auto", "Automático (como el celular)")}${op("claro", "Claro: se lee mejor bajo el sol")}${op("oscuro", "Oscuro")}</select>
@@ -18,8 +20,8 @@ function tarjetaApariencia() {
         <label class="ancho check"><input type="checkbox" name="modoObra" ${db.perfil.modoObra ? "checked" : ""}>
           Modo obra: letra grande, más contraste y botones más grandes</label>
         <button class="principal ancho">Aplicar</button>
-      </form>
-    </section>`;
+      </form>`,
+  });
 }
 import { VERSION_APP, SOPORTE } from "../config.js";
 import { icono, ICONOS_CATEGORIA } from "../iconos.js";
@@ -119,9 +121,10 @@ function tarjetaMiCuenta() {
 // Tarjeta de moneda: colones o dólares + tipo de cambio.
 function tarjetaMoneda() {
   const m = moneda();
-  return `
-    <section class="tarjeta">
-      <h3>${icono("moneda")}Moneda</h3>
+  return desplegable("mas:moneda", {
+    titulo: `${icono("moneda")}Moneda`,
+    resumen: `${m === "USD" ? "Dólares" : "Colones"} · ₡${tipoCambio()} por $1`,
+    contenido: `
       <form data-form="moneda" class="formulario">
         <label>Mostrar precios en
           <select name="moneda">
@@ -135,8 +138,8 @@ function tarjetaMoneda() {
         <button class="principal ancho">Guardar moneda</button>
       </form>
       <p class="nota">Todo se guarda en colones; al elegir dólares se convierte con este tipo de cambio.
-      Consulta el del día en el Banco Central (BCCR). Ejemplo: ₡10 000 = ${dinero(10000)}.</p>
-    </section>`;
+      Consulta el del día en el Banco Central (BCCR). Ejemplo: ₡10 000 = ${dinero(10000)}.</p>`,
+  });
 }
 
 // Tarjeta de ayuda: preguntas frecuentes + formas de contacto.
@@ -162,13 +165,14 @@ function tarjetaSoporte() {
     ["¿Funciona sin internet?", "Sí. Ábrela una vez con internet y después funciona sin señal en la obra."],
     ["Los precios no son los de mi ferretería", "Son de ejemplo. Edítalos en Catálogo; además se actualizan solos cada vez que registras una compra."],
   ];
-  return `
-    <section class="tarjeta">
-      <h3>${icono("ayuda")}Ayuda y soporte</h3>
+  return desplegable("mas:ayuda", {
+    titulo: `${icono("ayuda")}Ayuda y soporte`,
+    resumen: "Preguntas frecuentes y contacto",
+    contenido: `
       ${preguntas.map(([p, r]) => `<details class="pregunta"><summary>${p}</summary><p class="nota">${r}</p></details>`).join("")}
       ${botones.length ? `<p class="nota" style="margin-top:12px">¿No encontraste tu respuesta? Escríbenos:</p>
-      <div class="acciones-lista">${botones.join("")}</div>` : ""}
-    </section>`;
+      <div class="acciones-lista">${botones.join("")}</div>` : ""}`,
+  });
 }
 import { plataforma, enAppInstalada, sePuedeInstalar, instalar } from "../instalar.js";
 
@@ -201,7 +205,12 @@ function tarjetaInstalar() {
     contenido = `<p class="nota">En la computadora, con Chrome o Edge, busca el ícono de instalar a la
       derecha de la barra de direcciones. Para el celular, abre el enlace de tu app en el teléfono.</p>`;
   }
-  return `<section class="tarjeta"><h3>${icono("instalar")}Instalar en tu celular</h3>${contenido}</section>`;
+  return desplegable("mas:instalar", {
+    titulo: `${icono("instalar")}Instalar en tu celular`,
+    resumen: enAppInstalada() ? "Ya está instalada" : sePuedeInstalar() ? "Lista para instalar" : "Cómo instalarla",
+    abierto: sePuedeInstalar() && !enAppInstalada(), // si se puede instalar, se muestra abierta
+    contenido,
+  });
 }
 
 // Configuración de cada colección que se puede editar aquí.
@@ -255,12 +264,11 @@ export const vistaMas = {
 
       ${tarjetaApariencia()}
 
-      ${Object.entries(COLECCIONES).map(([clave, cfg]) => `
-        <section class="tarjeta">
-          <div class="encabezado">
-            <h3>${icono(cfg.icono)}${cfg.titulo} <span class="nota">(${db[clave].length})</span></h3>
-            <button data-accion="crear" data-col="${clave}">+ Agregar</button>
-          </div>
+      ${Object.entries(COLECCIONES).map(([clave, cfg]) => desplegable(`mas:${clave}`, {
+        titulo: `${icono(cfg.icono)}${cfg.titulo}`,
+        resumen: `${db[clave].length}`,
+        contenido: `
+          <div class="fila fin arriba"><button data-accion="crear" data-col="${clave}">+ Agregar ${cfg.singular}</button></div>
           ${db[clave].length ? db[clave].map((x) => `
             <div class="producto" data-id="${x.id}" data-col="${clave}">
               <div>${cfg.linea(x)}</div>
@@ -268,18 +276,20 @@ export const vistaMas = {
                 <button data-accion="editar" aria-label="Editar">${icono("editar")}</button>
                 <button data-accion="borrar" aria-label="Borrar">${icono("borrar")}</button>
               </div>
-            </div>`).join("") : `<p class="nota">Se agregan solos cuando registras una compra, o agrégalos aquí.</p>`}
-        </section>`).join("")}
+            </div>`).join("") : `<p class="nota">Se agregan solos cuando registras una compra, o agrégalos aquí.</p>`}`,
+      })).join("")}
 
-      <section class="tarjeta">
-        <h3>${icono("respaldo")}Respaldo</h3>
+      ${desplegable("mas:respaldo", {
+        titulo: `${icono("respaldo")}Respaldo`,
+        resumen: "Descargar o restaurar",
+        contenido: `
         <p class="nota">Guarda una copia de TODO (listas, catálogo, compras, gastos) en un archivo. Útil para pasar tus datos a otro celular. Las fotos de la bitácora no se incluyen: se quedan en este dispositivo.</p>
         <div class="acciones-lista">
           <button data-accion="exportar">${icono("descargar")}Descargar respaldo</button>
           <label class="boton">${icono("enviar")}Restaurar respaldo<input type="file" accept=".json,application/json" data-cambio="restaurar" hidden></label>
           <button data-accion="reiniciar" class="peligro">${icono("borrar")}Borrar todo</button>
-        </div>
-      </section>
+        </div>`,
+      })}
 
       ${tarjetaSoporte()}
 

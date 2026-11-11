@@ -4,7 +4,7 @@
 import { db, guardar, nuevoId, buscar, categoria, unidad, historialPrecios, categoriasOrdenadas, esDeMiOficio, asegurarCategoria, asegurarUnidad } from "../datos.js";
 import { icono } from "../iconos.js";
 import { exportarCatalogo, leerMateriales } from "../excel-datos.js";
-import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, mostrar, simbolo, aMoneda, aColones, precioEditado } from "../ui.js";
+import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, mostrar, simbolo, aMoneda, aColones, precioEditado, desplegable, desplegableAbierto } from "../ui.js";
 
 let filtroCategoria = "";
 
@@ -14,8 +14,13 @@ export const vistaCatalogo = {
   render() {
     const productos = db.productos
       .filter((p) => !filtroCategoria || p.categoriaId === filtroCategoria)
-      // los materiales de tu oficio primero, luego en orden alfabético
-      .sort((a, b) => (esDeMiOficio(b.categoriaId) - esDeMiOficio(a.categoriaId)) || a.nombre.localeCompare(b.nombre, "es"));
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    // Agrupar por categoría (las de tu oficio primero)
+    const grupos = categoriasOrdenadas()
+      .map((c) => ({ c, productos: productos.filter((p) => p.categoriaId === c.id) }))
+      .filter((g) => g.productos.length);
+    const sinCategoria = productos.filter((p) => !buscar("categorias", p.categoriaId));
+    if (sinCategoria.length) grupos.push({ c: { id: "sin", icono: "etiqueta", nombre: "Sin categoría" }, productos: sinCategoria });
     return `
       <div class="encabezado">
         <h2>Catálogo de materiales</h2>
@@ -32,18 +37,30 @@ export const vistaCatalogo = {
           ${opcionesDe(categoriasOrdenadas(), filtroCategoria, (c) => c.nombre)}
         </select>
       </div>
-      <section class="tarjeta">
-        <p class="nota">${productos.length} productos · el precio se actualiza solo cada vez que registras una compra.</p>
-        ${productos.length ? productos.map(filaProducto).join("") : `<p class="vacio">No hay productos aquí todavía.</p>`}
-      </section>`;
+      <p class="nota">${productos.length} productos en ${grupos.length} ${grupos.length === 1 ? "categoría" : "categorías"} · el precio se actualiza solo cada vez que registras una compra.</p>
+      ${grupos.length ? grupos.map(({ c, productos: ps }) => desplegable(`catalogo:${c.id}`, {
+        titulo: `${icono(c.icono, "icono-acento")}${seguro(c.nombre)}`,
+        resumen: `${ps.length}`,
+        abierto: Boolean(filtroCategoria), // todas cerradas, salvo si filtraste una categoría
+        clase: "grupo-catalogo",
+        contenido: ps.map(filaProducto).join(""),
+      })).join("") : `<p class="vacio">No hay productos aquí todavía.</p>`}`;
   },
 
   entradas: {
     // Filtra en pantalla sin volver a dibujar (así no se pierde lo que escribes).
+    // Al buscar, se abren sólo las categorías que tienen coincidencias.
     buscar(el) {
       const q = el.value.toLowerCase().trim();
-      document.querySelectorAll(".producto").forEach((fila) => {
-        fila.hidden = !fila.dataset.texto.includes(q);
+      document.querySelectorAll(".grupo-catalogo").forEach((grupo) => {
+        let hay = 0;
+        grupo.querySelectorAll(".producto").forEach((fila) => {
+          fila.hidden = !fila.dataset.texto.includes(q);
+          if (!fila.hidden) hay++;
+        });
+        grupo.hidden = q && !hay;
+        const abrir = q ? hay > 0 : desplegableAbierto(grupo.dataset.plegable, grupo.dataset.porDefecto === "1");
+        if (grupo.open !== abrir) { grupo.dataset.auto = "1"; grupo.open = abrir; }
       });
     },
   },
@@ -146,13 +163,12 @@ function masBarato(productoId) {
 }
 
 function filaProducto(p) {
-  const c = categoria(p.categoriaId);
   const u = unidad(p.unidadId);
   const barato = masBarato(p.id);
   return `
     <div class="producto" data-id="${p.id}" data-texto="${seguro(p.nombre.toLowerCase())}">
       <div>
-        <div class="nombre">${icono(c.icono, "icono-acento")} ${seguro(p.nombre)}</div>
+        <div class="nombre">${seguro(p.nombre)}</div>
         <div class="detalle">${dinero(p.precio)} / ${seguro(u.abrev)}${barato ? ` · Más barato en ${seguro(barato.proveedor)}: ${dinero(barato.precio)}` : ""}</div>
       </div>
       <div class="botones">
