@@ -167,7 +167,7 @@ const PRODUCTOS_ANTERIORES = [
   ["Disco de corte 4 1/2\"", "Herramienta", "pza", 30],
 ];
 
-function vacio() {
+export function vacio() {
   return {
     version: 4, perfil: { nombre: "", ocupacion: "", moneda: "CRC", tipoCambio: TIPO_CAMBIO_INICIAL },
     categorias: [], unidades: [], productos: [], proveedores: [],
@@ -272,9 +272,15 @@ function cargar() {
 // `export let` permite que otros archivos vean el valor nuevo si lo reemplazamos.
 export let db = cargar();
 
+// Otros módulos pueden enterarse cada vez que se guarda (la nube lo usa
+// para subir los cambios).
+const oyentes = [];
+export const alGuardar = (funcion) => oyentes.push(funcion);
+
 export function guardar() {
   try { localStorage.setItem(CLAVE, JSON.stringify(db)); }
   catch (e) { console.warn("No se pudo guardar", e); }
+  for (const f of oyentes) f();
 }
 
 guardar(); // guarda de una vez si hubo actualización de versión al cargar

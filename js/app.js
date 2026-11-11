@@ -19,6 +19,7 @@ import { vistaMas } from "./vistas/mas.js";
 import { vistaCalculadoras } from "./vistas/calculadoras.js";
 import { vistaBitacora } from "./vistas/bitacora.js";
 import { iniciarInstalacion } from "./instalar.js";
+import { iniciarNube } from "./nube.js";
 
 const VISTAS = {
   listas: vistaListas,
@@ -73,7 +74,7 @@ vista.addEventListener("submit", (e) => {
   const f = form && actual.formularios?.[form.dataset.form];
   if (!f) return;
   e.preventDefault();
-  f(form, Object.fromEntries(new FormData(form)));
+  f(form, Object.fromEntries(new FormData(form)), e); // e.submitter = botón que se tocó
 });
 
 // Íconos del HTML fijo (pestañas, botón instalar): <span data-icono="listas">
@@ -84,3 +85,6 @@ render();
 
 // ---------- PWA: instalar en el celular (ver instalar.js) ----------
 iniciarInstalacion();
+
+// ---------- Cuenta en la nube (ver nube.js) ----------
+iniciarNube();

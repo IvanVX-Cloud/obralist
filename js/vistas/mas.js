@@ -23,6 +23,52 @@ function tarjetaApariencia() {
 }
 import { VERSION_APP, SOPORTE } from "../config.js";
 import { icono, ICONOS_CATEGORIA } from "../iconos.js";
+import { nube, entrar, crearCuenta, recuperarContrasena, salir, sincronizar } from "../nube.js";
+
+// "hace 5 min", "hace 2 h"…
+function hace(fecha) {
+  const s = Math.round((Date.now() - fecha.getTime()) / 1000);
+  if (s < 60) return "hace un momento";
+  if (s < 3600) return `hace ${Math.round(s / 60)} min`;
+  if (s < 86400) return `hace ${Math.round(s / 3600)} h`;
+  return fecha.toLocaleDateString("es-CR", { day: "numeric", month: "short" });
+}
+
+// Tarjeta de la cuenta en la nube: iniciar sesión o ver el estado de la sincronización.
+function tarjetaCuenta() {
+  let contenido;
+  if (!nube.configurada) {
+    contenido = `<p class="nota">La conexión con la nube todavía no está configurada en esta versión de la app.</p>`;
+  } else if (!nube.lista) {
+    contenido = `<p class="nota">Conectando con la nube…</p>`;
+  } else if (!nube.usuario) {
+    contenido = `
+      <p class="nota">Crea una cuenta gratis para respaldar tus datos y usarlos en el celular y en la computadora.
+      Sin cuenta, la app sigue funcionando igual, sólo en este dispositivo.</p>
+      ${nube.error ? `<p class="rojo">${icono("alerta")} ${seguro(nube.error)}</p>` : ""}
+      <form data-form="cuenta" class="formulario">
+        <label class="ancho">Correo<input name="correo" type="email" autocomplete="email" required></label>
+        <label class="ancho">Contraseña<input name="contrasena" type="password" autocomplete="current-password" minlength="6" required></label>
+        <button class="principal" value="entrar">Entrar</button>
+        <button value="crear">Crear cuenta</button>
+      </form>
+      <button class="enlace" data-accion="recuperar">Olvidé mi contraseña</button>`;
+  } else {
+    const estado = nube.sincronizando ? "Sincronizando…"
+      : nube.error ? `${icono("alerta")} ${seguro(nube.error)}`
+      : nube.ultima ? `${icono("check", "icono-acento")} Sincronizado ${hace(nube.ultima)}` : "Pendiente de sincronizar";
+    contenido = `
+      <p>Conectado como <strong>${seguro(nube.usuario.email || "")}</strong></p>
+      <p class="nota ${nube.error ? "rojo" : ""}">${estado}</p>
+      <p class="nota">Tus listas, catálogo, compras, gastos y bitácora se respaldan solos cuando hay internet.
+      Las fotos de la bitácora todavía se quedan sólo en este dispositivo.</p>
+      <div class="acciones-lista">
+        <button data-accion="sincronizar" ${nube.sincronizando ? "disabled" : ""}>${icono("restaurar")}Sincronizar ahora</button>
+        <button data-accion="salir">${icono("cerrar")}Cerrar sesión</button>
+      </div>`;
+  }
+  return `<section class="tarjeta cuenta"><h3>${icono("nube")}Cuenta en la nube</h3>${contenido}</section>`;
+}
 
 // Tarjeta de moneda: colones o dólares + tipo de cambio.
 function tarjetaMoneda() {
@@ -177,12 +223,7 @@ export const vistaMas = {
         Elige de la lista o escribe la tuya.</p>
       </section>
 
-      <section class="tarjeta cuenta">
-        <h3>${icono("nube")}Cuenta en la nube <span class="etiqueta">Próximamente</span></h3>
-        <p class="nota">Por ahora tus datos viven sólo en este dispositivo. En el siguiente paso conectaremos
-        una base de datos en la nube (Supabase) para iniciar sesión, usar la app en el celular y en la compu
-        con los mismos datos, y compartir listas con tu cuadrilla al instante.</p>
-      </section>
+      ${tarjetaCuenta()}
 
       ${Object.entries(COLECCIONES).map(([clave, cfg]) => `
         <section class="tarjeta">
@@ -216,6 +257,25 @@ export const vistaMas = {
   },
 
   formularios: {
+    // Entrar o crear cuenta (según el botón que se tocó)
+    async cuenta(form, d, e) {
+      const crear = e?.submitter?.value === "crear";
+      const botones = form.querySelectorAll("button");
+      botones.forEach((b) => { b.disabled = true; });
+      try {
+        if (crear) {
+          const { requiereConfirmar } = await crearCuenta(d.correo.trim(), d.contrasena);
+          aviso(requiereConfirmar ? "Cuenta creada. Revisa tu correo y toca el enlace para confirmarla." : "Cuenta creada");
+        } else {
+          await entrar(d.correo.trim(), d.contrasena);
+          aviso("Sesión iniciada. Sincronizando…");
+        }
+      } catch (error) {
+        aviso(error.message);
+        botones.forEach((b) => { b.disabled = false; });
+      }
+    },
+
     apariencia(form, d) {
       db.perfil.tema = ["claro", "oscuro"].includes(d.tema) ? d.tema : "auto";
       db.perfil.modoObra = Boolean(d.modoObra);
@@ -243,6 +303,22 @@ export const vistaMas = {
 
   acciones: {
     instalar() { instalar(); },
+
+    async recuperar() {
+      const correo = document.querySelector('[data-form="cuenta"] [name="correo"]')?.value.trim();
+      if (!correo) return aviso("Escribe tu correo arriba y vuelve a tocar «Olvidé mi contraseña».");
+      try {
+        await recuperarContrasena(correo);
+        aviso("Te enviamos un correo para cambiar la contraseña.");
+      } catch (error) { aviso(error.message); }
+    },
+
+    sincronizar() { sincronizar({ manual: true }); },
+
+    salir() {
+      if (!confirm("¿Cerrar sesión en este dispositivo?\nTus datos se quedan aquí, pero dejan de respaldarse hasta que vuelvas a entrar.")) return;
+      salir();
+    },
 
     async crear(el) {
       const clave = el.dataset.col;
