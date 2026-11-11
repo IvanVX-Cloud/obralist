@@ -136,6 +136,8 @@ button.peligro { color: var(--peligro); }
 .selector-corto { flex: 0 1 auto; }
 
 /* Movimientos de gastos */
+.encabezado-grupo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
+.encabezado-grupo h3 { margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 4px; }
 .movimiento summary { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; list-style: none; font-weight: normal; }
 .movimiento summary::-webkit-details-marker { display: none; }
 .movimiento summary > div, .movimiento .nombre-item { display: grid; gap: 3px; }
@@ -254,7 +256,7 @@ th { color: var(--suave); font-weight: 600; }
   background: var(--tarjeta); border-top: 1px solid var(--borde);
   padding-bottom: env(safe-area-inset-bottom);
 }
-.tabs a { display: grid; justify-items: center; padding: 8px 0; font-size: .75rem; color: var(--suave); text-decoration: none; }
+.tabs a { display: grid; justify-items: center; align-content: start; text-align: center; line-height: 1.15; padding: 8px 2px; font-size: .75rem; color: var(--suave); text-decoration: none; }
 .tabs a .icono { width: 24px; height: 24px; margin-bottom: 2px; }
 .tabs a.activa { color: var(--acento); font-weight: 700; }
 

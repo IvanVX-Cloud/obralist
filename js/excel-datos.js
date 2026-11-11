@@ -114,7 +114,7 @@ export function exportarMovimientos(movimientos, textoFiltros) {
 
   // Hoja 1
   const filas = [
-    [{ v: "ObraList — Gastos", s: ESTILO.titulo }],
+    [{ v: "ObraList — Compras y gastos", s: ESTILO.titulo }],
     [{ v: subtitulo, s: ESTILO.subtitulo }],
     [],
     ["Fecha", "Obra", "Tipo", "Detalle", "Monto"].map((v) => ({ v, s: ESTILO.encabezado })),
@@ -128,7 +128,7 @@ export function exportarMovimientos(movimientos, textoFiltros) {
     filas.push([
       { v: fechaExcel(m.fecha), s: ESTILO.fecha },
       { v: obra(m.obj.listaId), s: ESTILO.texto },
-      { v: esCompra ? "Materiales" : m.obj.tipo, s: ESTILO.texto },
+      { v: esCompra ? "Compra" : m.obj.tipo, s: ESTILO.texto },
       { v: detalle, s: ESTILO.texto },
       { v: aMoneda(m.monto), s: dinero },
     ]);
@@ -137,8 +137,8 @@ export function exportarMovimientos(movimientos, textoFiltros) {
   const totalMat = redondo(movimientos.filter((m) => m.clase === "compra").reduce((s, m) => s + aMoneda(m.monto), 0));
   const totalTodo = redondo(movimientos.reduce((s, m) => s + aMoneda(m.monto), 0));
   const vacias = (n, estilo) => Array.from({ length: n }, () => ({ s: estilo }));
-  filas.push([{ v: "Materiales", s: ESTILO.texto }, ...vacias(3, ESTILO.texto), { f: `SUMIF(C${primera}:C${ultima},"Materiales",E${primera}:E${ultima})`, v: totalMat, s: dinero }]);
-  filas.push([{ v: "Otros gastos", s: ESTILO.texto }, ...vacias(3, ESTILO.texto), { f: `E${ultima + 3}-E${ultima + 1}`, v: redondo(totalTodo - totalMat), s: dinero }]);
+  filas.push([{ v: "Compras", s: ESTILO.texto }, ...vacias(3, ESTILO.texto), { f: `SUMIF(C${primera}:C${ultima},"Compra",E${primera}:E${ultima})`, v: totalMat, s: dinero }]);
+  filas.push([{ v: "Gastos", s: ESTILO.texto }, ...vacias(3, ESTILO.texto), { f: `E${ultima + 3}-E${ultima + 1}`, v: redondo(totalTodo - totalMat), s: dinero }]);
   filas.push([{ v: "Total", s: ESTILO.totalTexto }, ...vacias(3, ESTILO.totalTexto), { f: `SUM(E${primera}:E${ultima})`, v: totalTodo, s: total }]);
 
   // Hoja 2
@@ -173,14 +173,14 @@ export function exportarMovimientos(movimientos, textoFiltros) {
   }
 
   const hojas = [{
-    nombre: "Movimientos", filas, anchos: [12, 24, 18, 46, 16], congelar: 4,
+    nombre: "Compras y gastos", filas, anchos: [12, 24, 18, 46, 16], congelar: 4,
     filtro: `A4:E${ultima}`, altos: { 0: 26, 3: 22 },
   }];
   if (compras.length) hojas.push({
     nombre: "Detalle de compras", filas: detalle, anchos: [12, 22, 22, 40, 10, 8, 15, 15], congelar: 4,
     filtro: u2 >= p2 ? `A4:H${u2}` : null, altos: { 0: 26, 3: 22 },
   });
-  descargar(nombreArchivo(`Gastos ObraList ${hoy()}`), crearXlsx(hojas), TIPO_XLSX);
+  descargar(nombreArchivo(`Compras y gastos ObraList ${hoy()}`), crearXlsx(hojas), TIPO_XLSX);
 }
 
 // ---------------------------------------------------------------------

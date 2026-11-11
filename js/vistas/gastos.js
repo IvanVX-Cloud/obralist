@@ -47,12 +47,13 @@ function filtrados() {
 }
 
 // Una sola lista ordenada: [{ clase: "compra"|"gasto", fecha, monto, obj }]
+// Primero todas las compras y después todos los gastos, cada grupo del más reciente al más viejo.
 function movimientos(compras, gastos) {
-  const todos = [
-    ...(filtroTipo === "otros" ? [] : compras.map((c) => ({ clase: "compra", fecha: c.fecha, monto: c.total, obj: c }))),
-    ...(filtroTipo === "materiales" ? [] : gastos.map((g) => ({ clase: "gasto", fecha: g.fecha, monto: g.monto, obj: g }))),
+  const recientes = (a, b) => b.fecha.localeCompare(a.fecha);
+  return [
+    ...(filtroTipo === "otros" ? [] : compras.map((c) => ({ clase: "compra", fecha: c.fecha, monto: c.total, obj: c })).sort(recientes)),
+    ...(filtroTipo === "materiales" ? [] : gastos.map((g) => ({ clase: "gasto", fecha: g.fecha, monto: g.monto, obj: g })).sort(recientes)),
   ];
-  return todos.sort((a, b) => b.fecha.localeCompare(a.fecha));
 }
 
 const nombreMes = (m) => {
@@ -72,7 +73,7 @@ export const vistaGastos = {
 
     return `
       <div class="encabezado">
-        <h2>${icono("gastos")}Gastos</h2>
+        <h2>${icono("gastos")}Compras y gastos</h2>
         <button class="principal" data-accion="nuevo">+ Gasto</button>
       </div>
 
@@ -93,8 +94,8 @@ export const vistaGastos = {
       </div>
 
       <section class="resumen">
-        <div class="dato"><span>Materiales</span><strong>${dinero(totMateriales)}</strong></div>
-        <div class="dato"><span>Otros gastos</span><strong>${dinero(totOtros)}</strong></div>
+        <div class="dato"><span>Compras</span><strong>${dinero(totMateriales)}</strong></div>
+        <div class="dato"><span>Gastos</span><strong>${dinero(totOtros)}</strong></div>
         <div class="dato"><span>Total</span><strong>${dinero(totMateriales + totOtros)}</strong></div>
       </section>
 
@@ -145,7 +146,7 @@ export const vistaGastos = {
       const filtros = [
         filtroLista ? `Obra: ${buscar("listas", filtroLista)?.nombre}` : "Todas las obras",
         filtroMes ? nombreMes(filtroMes) : "Todos los meses",
-        filtroTipo === "materiales" ? "Sólo materiales" : filtroTipo === "otros" ? "Sólo otros gastos" : "",
+        filtroTipo === "materiales" ? "Sólo compras" : filtroTipo === "otros" ? "Sólo gastos" : "",
       ].filter(Boolean).join("   ·   ");
       exportarMovimientos(lista, filtros);
       aviso("Excel descargado");
@@ -158,17 +159,34 @@ export const vistaGastos = {
 // ---------------------------------------------------------------------
 function vistaMovimientos(compras, gastos) {
   const lista = movimientos(compras, gastos);
+  const deCompras = lista.filter((m) => m.clase === "compra");
+  const deGastos = lista.filter((m) => m.clase === "gasto");
+  const suma = (l) => l.reduce((s, m) => s + m.monto, 0);
   const op = (v, t) => `<option value="${v}" ${filtroTipo === v ? "selected" : ""}>${t}</option>`;
+  const conFiltros = filtroLista || filtroMes;
   return `
     <div class="fila entre">
-      <select data-cambio="tipo" aria-label="Tipo de movimiento" class="selector-corto">
-        ${op("todo", "Todo")}${op("materiales", "Sólo materiales")}${op("otros", "Sólo otros gastos")}
+      <select data-cambio="tipo" aria-label="Qué mostrar" class="selector-corto">
+        ${op("todo", "Compras y gastos")}${op("materiales", "Sólo compras")}${op("otros", "Sólo gastos")}
       </select>
       <button data-accion="excel">${icono("tabla")}Exportar a Excel</button>
     </div>
-    ${lista.length ? lista.map((m) => (m.clase === "compra" ? tarjetaCompra(m.obj) : tarjetaGasto(m.obj))).join("")
-      : `<p class="vacio">No hay movimientos${filtroLista || filtroMes || filtroTipo !== "todo" ? " con estos filtros" : " todavía"}.
-         Las compras se registran desde una lista con "Finalizar compra"; la mano de obra, fletes y demás con "+ Gasto".</p>`}`;
+
+    ${filtroTipo === "otros" ? "" : `
+      <div class="encabezado-grupo">
+        <h3>${icono("carrito")}Compras <span class="nota">(${deCompras.length})</span></h3>
+        <strong>${dinero(suma(deCompras))}</strong>
+      </div>
+      ${deCompras.length ? deCompras.map((m) => tarjetaCompra(m.obj)).join("")
+        : `<p class="nota">No hay compras${conFiltros ? " con estos filtros" : " todavía"}. Se registran desde una lista: marca los materiales y toca "Finalizar compra".</p>`}`}
+
+    ${filtroTipo === "materiales" ? "" : `
+      <div class="encabezado-grupo">
+        <h3>${icono("billetera")}Gastos <span class="nota">(${deGastos.length})</span></h3>
+        <strong>${dinero(suma(deGastos))}</strong>
+      </div>
+      ${deGastos.length ? deGastos.map((m) => tarjetaGasto(m.obj)).join("")
+        : `<p class="nota">No hay gastos${conFiltros ? " con estos filtros" : " todavía"}. Mano de obra, fletes, renta de equipo y demás se registran con "+ Gasto".</p>`}`}`;
 }
 
 function tarjetaCompra(c) {
@@ -180,7 +198,7 @@ function tarjetaCompra(c) {
         <div>
           <strong>${seguro(prov)}</strong>
           <div class="nota">${fecha(c.fecha)} · ${seguro(obra)} · ${c.items.length} ${c.items.length === 1 ? "material" : "materiales"}</div>
-          <span class="etiqueta-tipo materiales">${icono("carrito")} Materiales</span>
+          <span class="etiqueta-tipo materiales">${icono("carrito")} Compra</span>
         </div>
         <strong>${dinero(c.total)}</strong>
       </summary>
@@ -235,8 +253,8 @@ function vistaReportes(compras, gastos) {
     .map(([m, v]) => [new Date(`${m}-15T12:00:00`).toLocaleDateString("es-CR", { month: "short", year: "numeric" }), v]);
   return `
     ${filtroLista || filtroMes ? "" : `<section class="tarjeta"><h3>${icono("casco")}Por obra</h3>${reportePorObra()}</section>`}
-    <section class="tarjeta"><h3>${icono("ladrillos")}Materiales por categoría</h3>${barras([...porCategoria])}</section>
-    <section class="tarjeta"><h3>${icono("billetera")}Otros gastos por tipo</h3>${barras([...porTipo])}</section>
+    <section class="tarjeta"><h3>${icono("ladrillos")}Compras por categoría</h3>${barras([...porCategoria])}</section>
+    <section class="tarjeta"><h3>${icono("billetera")}Gastos por tipo</h3>${barras([...porTipo])}</section>
     <section class="tarjeta"><h3>${icono("tienda")}Por proveedor</h3>${barras([...porProveedor])}</section>
     ${filtroMes ? "" : `<section class="tarjeta"><h3>${icono("gastos")}Por mes (últimos 6)</h3>${barras(meses, { ordenar: false })}</section>`}`;
 }
@@ -250,7 +268,7 @@ function reportePorObra() {
       <div class="producto">
         <div>
           <div class="nombre">${seguro(l.nombre)}</div>
-          <div class="detalle">Materiales ${dinero(t.compras)} · Otros ${dinero(t.otros)}${l.presupuesto > 0 ? ` · Presupuesto ${dinero(l.presupuesto)}` : ""}</div>
+          <div class="detalle">Compras ${dinero(t.compras)} · Gastos ${dinero(t.otros)}${l.presupuesto > 0 ? ` · Presupuesto ${dinero(l.presupuesto)}` : ""}</div>
         </div>
         <strong class="${pasado ? "rojo" : ""}">${dinero(t.gastadoReal)}</strong>
       </div>`;
