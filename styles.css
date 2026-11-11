@@ -129,6 +129,20 @@ button.peligro { color: var(--peligro); }
 .microfono.escuchando { background: var(--peligro); border-color: var(--peligro); animation: latido 1s infinite; }
 @keyframes latido { 50% { transform: scale(1.08); } }
 
+/* Botones tipo "pestañas" dentro de una pantalla (Movimientos / Reportes) */
+.segmentos { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: var(--borde); border-radius: 12px; }
+.segmentos button { border: none; background: transparent; font-weight: 600; color: var(--suave); padding: 8px; }
+.segmentos button.activo { background: var(--tarjeta); color: var(--texto); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.selector-corto { flex: 0 1 auto; }
+
+/* Movimientos de gastos */
+.movimiento summary { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; list-style: none; font-weight: normal; }
+.movimiento summary::-webkit-details-marker { display: none; }
+.movimiento summary > div, .movimiento .nombre-item { display: grid; gap: 3px; }
+.resumen-movimiento { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.etiqueta-tipo { justify-self: start; display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 600; color: var(--suave); border: 1px solid var(--borde); padding: 2px 8px; border-radius: 99px; margin-top: 2px; }
+.etiqueta-tipo.materiales { color: var(--acento); border-color: var(--acento); }
+
 /* Botón que parece enlace */
 button.enlace { background: none; border: none; padding: 6px 0; color: var(--acento); text-decoration: underline; font-size: .9rem; }
 .cuenta .formulario { margin-top: 8px; }
@@ -236,7 +250,7 @@ th { color: var(--suave); font-weight: 600; }
 /* ---------- Pestañas de abajo ---------- */
 .tabs {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 6;
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   background: var(--tarjeta); border-top: 1px solid var(--borde);
   padding-bottom: env(safe-area-inset-bottom);
 }

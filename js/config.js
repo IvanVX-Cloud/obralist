@@ -2,7 +2,7 @@
 // config.js — Datos de la app que puedes cambiar fácilmente.
 // =====================================================================
 
-export const VERSION_APP = "1.5.0";
+export const VERSION_APP = "1.6.0";
 
 // Conexión con Supabase (la nube). Ambos datos son PÚBLICOS por diseño:
 // la seguridad la dan las reglas de la base de datos (Row Level Security).

@@ -13,8 +13,14 @@ export const TIPO_XLSX = "application/vnd.openxmlformats-officedocument.spreadsh
 // Estilos disponibles (el número es su posición en styles.xml → cellXfs)
 export const ESTILO = {
   normal: 0, titulo: 1, subtitulo: 2, encabezado: 3, texto: 4, numero: 5,
-  colones: 6, dolares: 7, totalTexto: 8, totalColones: 9, totalDolares: 10, totalNumero: 11,
+  colones: 6, dolares: 7, totalTexto: 8, totalColones: 9, totalDolares: 10, totalNumero: 11, fecha: 12,
 };
+
+// Excel guarda las fechas como "días desde el 30/12/1899". "2026-11-10" → 46336
+export function fechaExcel(iso) {
+  const [a, m, d] = iso.split("-").map(Number);
+  return Math.round((Date.UTC(a, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000);
+}
 
 // ---------------------------------------------------------------------
 // ESCRIBIR
@@ -106,7 +112,7 @@ function hojaXml(h) {
 
 // Fuentes, colores y formatos (₡ sin decimales, $ con 2 decimales)
 const ESTILOS_XML = `${XML}<styleSheet xmlns="${NS_MAIN}">`
-  + `<numFmts count="3"><numFmt numFmtId="164" formatCode="&quot;₡&quot;#,##0"/><numFmt numFmtId="165" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="166" formatCode="#,##0.##"/></numFmts>`
+  + `<numFmts count="4"><numFmt numFmtId="164" formatCode="&quot;₡&quot;#,##0"/><numFmt numFmtId="165" formatCode="&quot;$&quot;#,##0.00"/><numFmt numFmtId="166" formatCode="#,##0.##"/><numFmt numFmtId="167" formatCode="dd/mm/yyyy"/></numFmts>`
   + `<fonts count="5">`
   + `<font><sz val="11"/><name val="Calibri"/></font>`
   + `<font><b/><sz val="15"/><color rgb="FF1B1300"/><name val="Calibri"/></font>`
@@ -121,19 +127,20 @@ const ESTILOS_XML = `${XML}<styleSheet xmlns="${NS_MAIN}">`
   + `<border><left/><right/><top/><bottom style="thin"><color rgb="FFE2DDD5"/></bottom><diagonal/></border>`
   + `<border><left/><right/><top style="medium"><color rgb="FF1B1300"/></top><bottom/><diagonal/></border></borders>`
   + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
-  + `<cellXfs count="12">`
+  + `<cellXfs count="13">`
   + `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>`                                                    // 0 normal
   + `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>`                                      // 1 título
   + `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>`                                      // 2 subtítulo
   + `<xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>` // 3 encabezado
   + `<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>` // 4 texto
-  + `<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>` // 5 número
+  + `<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>` // 5 número
   + `<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>` // 6 colones
   + `<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment vertical="top"/></xf>` // 7 dólares
   + `<xf numFmtId="0" fontId="4" fillId="3" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>`           // 8 total (texto)
   + `<xf numFmtId="164" fontId="4" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>` // 9 total ₡
   + `<xf numFmtId="165" fontId="4" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>` // 10 total $
-  + `<xf numFmtId="166" fontId="4" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>` // 11 total número
+  + `<xf numFmtId="0" fontId="4" fillId="3" borderId="2" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"/>` // 11 total número
+  + `<xf numFmtId="167" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top"/></xf>` // 12 fecha
   + `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
 
 // ---------- ZIP (método "store": sin comprimir, más simple) ----------

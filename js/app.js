@@ -13,7 +13,6 @@ import { $, alRefrescar, aplicarApariencia } from "./ui.js";
 import { icono } from "./iconos.js";
 import { vistaListas, vistaLista } from "./vistas/listas.js";
 import { vistaCatalogo } from "./vistas/catalogo.js";
-import { vistaHistorial } from "./vistas/historial.js";
 import { vistaGastos } from "./vistas/gastos.js";
 import { vistaMas } from "./vistas/mas.js";
 import { vistaCalculadoras } from "./vistas/calculadoras.js";
@@ -25,7 +24,7 @@ const VISTAS = {
   listas: vistaListas,
   lista: vistaLista,
   catalogo: vistaCatalogo,
-  historial: vistaHistorial,
+  historial: vistaGastos, // la antigua pantalla "Compras" ahora está dentro de Gastos
   gastos: vistaGastos,
   mas: vistaMas,
   calculadoras: vistaCalculadoras,

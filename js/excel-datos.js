@@ -2,8 +2,8 @@
 // excel-datos.js — Qué se exporta a Excel y cómo se importa desde Excel.
 // (La parte técnica de armar/leer el archivo está en excel.js)
 // =====================================================================
-import { db, categoria, unidad, categoriasOrdenadas, hoy } from "./datos.js";
-import { crearXlsx, leerArchivo, aNumero, letra, ESTILO, TIPO_XLSX } from "./excel.js";
+import { db, categoria, unidad, categoriasOrdenadas, hoy, buscar } from "./datos.js";
+import { crearXlsx, leerArchivo, aNumero, letra, ESTILO, TIPO_XLSX, fechaExcel } from "./excel.js";
 import { aMoneda, aColones, moneda, tipoCambio, simbolo, descargar, formulario, seguro, fecha } from "./ui.js";
 
 const ESTADOS = { pendiente: "Pendiente", carrito: "En carrito", comprado: "Comprado" };
@@ -98,6 +98,89 @@ export function exportarCatalogo() {
     filtro: productos.length ? `A3:D${productos.length + 3}` : null, altos: { 0: 26, 2: 22 },
   }]);
   descargar(nombreArchivo(`Catálogo ObraList ${hoy()}`), archivo, TIPO_XLSX);
+}
+
+// ---------------------------------------------------------------------
+// EXPORTAR movimientos de gastos (para llevar las cuentas o el contador)
+//   Hoja 1 "Movimientos": una fila por compra o gasto, con totales.
+//   Hoja 2 "Detalle de compras": cada material comprado.
+// movimientos: [{ clase: "compra"|"gasto", fecha, monto, obj }]
+// ---------------------------------------------------------------------
+export function exportarMovimientos(movimientos, textoFiltros) {
+  const { dinero, total } = estilosDinero();
+  const obra = (id) => buscar("listas", id)?.nombre || "";
+  const proveedor = (id) => buscar("proveedores", id)?.nombre || "";
+  const subtitulo = [textoFiltros, `Generado: ${fecha(hoy())}`, lineaMoneda()].filter(Boolean).join("   ·   ");
+
+  // Hoja 1
+  const filas = [
+    [{ v: "ObraList — Gastos", s: ESTILO.titulo }],
+    [{ v: subtitulo, s: ESTILO.subtitulo }],
+    [],
+    ["Fecha", "Obra", "Tipo", "Detalle", "Monto"].map((v) => ({ v, s: ESTILO.encabezado })),
+  ];
+  const primera = filas.length + 1;
+  for (const m of movimientos) {
+    const esCompra = m.clase === "compra";
+    const detalle = esCompra
+      ? [proveedor(m.obj.proveedorId), `${m.obj.items.length} ${m.obj.items.length === 1 ? "material" : "materiales"}`, m.obj.nota].filter(Boolean).join(" · ")
+      : m.obj.descripcion || "";
+    filas.push([
+      { v: fechaExcel(m.fecha), s: ESTILO.fecha },
+      { v: obra(m.obj.listaId), s: ESTILO.texto },
+      { v: esCompra ? "Materiales" : m.obj.tipo, s: ESTILO.texto },
+      { v: detalle, s: ESTILO.texto },
+      { v: aMoneda(m.monto), s: dinero },
+    ]);
+  }
+  const ultima = primera + movimientos.length - 1;
+  const totalMat = redondo(movimientos.filter((m) => m.clase === "compra").reduce((s, m) => s + aMoneda(m.monto), 0));
+  const totalTodo = redondo(movimientos.reduce((s, m) => s + aMoneda(m.monto), 0));
+  const vacias = (n, estilo) => Array.from({ length: n }, () => ({ s: estilo }));
+  filas.push([{ v: "Materiales", s: ESTILO.texto }, ...vacias(3, ESTILO.texto), { f: `SUMIF(C${primera}:C${ultima},"Materiales",E${primera}:E${ultima})`, v: totalMat, s: dinero }]);
+  filas.push([{ v: "Otros gastos", s: ESTILO.texto }, ...vacias(3, ESTILO.texto), { f: `E${ultima + 3}-E${ultima + 1}`, v: redondo(totalTodo - totalMat), s: dinero }]);
+  filas.push([{ v: "Total", s: ESTILO.totalTexto }, ...vacias(3, ESTILO.totalTexto), { f: `SUM(E${primera}:E${ultima})`, v: totalTodo, s: total }]);
+
+  // Hoja 2
+  const compras = movimientos.filter((m) => m.clase === "compra");
+  const detalle = [
+    [{ v: "ObraList — Detalle de compras", s: ESTILO.titulo }],
+    [{ v: subtitulo, s: ESTILO.subtitulo }],
+    [],
+    ["Fecha", "Obra", "Proveedor", "Material", "Cantidad", "Unidad", "Precio unitario", "Importe"].map((v) => ({ v, s: ESTILO.encabezado })),
+  ];
+  const p2 = detalle.length + 1;
+  for (const m of compras) {
+    for (const it of m.obj.items) {
+      const r = detalle.length + 1;
+      const precio = aMoneda(it.precio);
+      detalle.push([
+        { v: fechaExcel(m.fecha), s: ESTILO.fecha },
+        { v: obra(m.obj.listaId), s: ESTILO.texto },
+        { v: proveedor(m.obj.proveedorId), s: ESTILO.texto },
+        { v: it.nombre, s: ESTILO.texto },
+        { v: it.cantidad, s: ESTILO.numero },
+        { v: unidad(it.unidadId).abrev, s: ESTILO.texto },
+        { v: precio, s: dinero },
+        { f: `E${r}*G${r}`, v: redondo(it.cantidad * precio), s: dinero },
+      ]);
+    }
+  }
+  const u2 = detalle.length;
+  if (u2 >= p2) {
+    const suma = redondo(compras.reduce((s, m) => s + m.obj.items.reduce((t, it) => t + it.cantidad * aMoneda(it.precio), 0), 0));
+    detalle.push([{ v: "Total", s: ESTILO.totalTexto }, ...vacias(6, ESTILO.totalTexto), { f: `SUM(H${p2}:H${u2})`, v: suma, s: total }]);
+  }
+
+  const hojas = [{
+    nombre: "Movimientos", filas, anchos: [12, 24, 18, 46, 16], congelar: 4,
+    filtro: `A4:E${ultima}`, altos: { 0: 26, 3: 22 },
+  }];
+  if (compras.length) hojas.push({
+    nombre: "Detalle de compras", filas: detalle, anchos: [12, 22, 22, 40, 10, 8, 15, 15], congelar: 4,
+    filtro: u2 >= p2 ? `A4:H${u2}` : null, altos: { 0: 26, 3: 22 },
+  });
+  descargar(nombreArchivo(`Gastos ObraList ${hoy()}`), crearXlsx(hojas), TIPO_XLSX);
 }
 
 // ---------------------------------------------------------------------

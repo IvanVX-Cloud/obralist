@@ -380,7 +380,7 @@ export const vistaLista = {
         if (p) p.precio = i.precio; // el catálogo recuerda el último precio
       }
       guardar(); refrescar();
-      aviso("Compra guardada en el historial");
+      aviso("Compra guardada en Gastos");
     },
 
     async editar() {
@@ -409,7 +409,7 @@ export const vistaLista = {
     },
 
     borrar() {
-      if (!confirm(`¿Borrar la lista "${lista.nombre}"?\nLas compras y gastos ya registrados se quedan en el historial.`)) return;
+      if (!confirm(`¿Borrar la lista "${lista.nombre}"?\nLas compras y gastos ya registrados se quedan en Gastos.`)) return;
       db.listas = db.listas.filter((l) => l !== lista);
       // también su bitácora y fotos
       for (const r of registrosDe(lista.id)) for (const id of r.fotos) borrarFoto(id).catch(() => {});

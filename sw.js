@@ -5,7 +5,7 @@
 // archivo y guarda una copia; si no hay señal (en la obra), usa la copia guardada.
 // Así ya no hace falta cambiar VERSION cada vez que editas algo; sólo cuando
 // agregues o quites archivos de la lista ARCHIVOS.
-const VERSION = "obralist-v10";
+const VERSION = "obralist-v11";
 
 // Ojo: no ponemos "./index.html" porque Netlify lo redirige a "./" y una
 // respuesta redirigida en caché puede romper la app sin internet.
@@ -31,7 +31,6 @@ const ARCHIVOS = [
   "./js/excel-datos.js",
   "./js/vistas/listas.js",
   "./js/vistas/catalogo.js",
-  "./js/vistas/historial.js",
   "./js/vistas/gastos.js",
   "./js/vistas/mas.js",
 ];
