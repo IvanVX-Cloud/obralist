@@ -253,7 +253,7 @@ export const vistaMas = {
 
       ${tarjetaSoporte()}
 
-      <p class="nota centro">ObraList ${VERSION_APP} · Hecha en Costa Rica</p>`;
+      <p class="nota centro">ObraList · Versión beta · Hecha en Costa Rica</p>`;
   },
 
   formularios: {

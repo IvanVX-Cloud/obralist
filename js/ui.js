@@ -115,6 +115,7 @@ export function formulario({ titulo, campos, boton = "Guardar" }) {
 }
 
 function campoHtml(c) {
+  if (c.tipo === "html") return `<div class="ancho nota">${c.html}</div>`; // texto informativo (ya escapado)
   const valor = seguro(c.valor ?? "");
   const req = c.requerido ? "required" : "";
   let control;

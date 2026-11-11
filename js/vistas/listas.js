@@ -12,6 +12,7 @@ import { vozDisponible, escuchar, interpretar } from "../voz.js";
 import { icono } from "../iconos.js";
 import { registrosDe, ultimoAvance } from "./bitacora.js";
 import { borrarFoto } from "../fotos.js";
+import { exportarLista, leerMateriales } from "../excel-datos.js";
 import {
   $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir,
   simbolo, aMoneda, aColones, precioEditado,
@@ -191,7 +192,8 @@ export const vistaLista = {
         <button data-accion="editar">${icono("editar")}Editar</button>
         <button data-accion="compartirTexto">${icono("compartir")}Compartir</button>
         <button data-accion="compartirArchivo">${icono("enviar")}Enviar archivo</button>
-        <button data-accion="csv">${icono("tabla")}Excel</button>
+        <button data-accion="excel">${icono("tabla")}Exportar a Excel</button>
+        <label class="boton">${icono("enviar")}Importar de Excel<input type="file" accept=".xlsx,.xls,.csv" data-cambio="importarExcel" hidden></label>
         <button data-accion="gasto">${icono("billetera")}Otro gasto</button>
         <button data-accion="archivar">${l.archivada ? `${icono("restaurar")}Desarchivar` : `${icono("archivar")}Archivar`}</button>
         <button data-accion="borrar" class="peligro">${icono("borrar")}Borrar</button>
@@ -287,6 +289,23 @@ export const vistaLista = {
   },
 
   cambios: {
+    // Agregar a esta lista los materiales de un archivo de Excel
+    async importarExcel(el) {
+      const archivo = el.files[0];
+      el.value = "";
+      if (!archivo) return;
+      try {
+        const materiales = await leerMateriales(archivo, { conCantidad: true });
+        if (!materiales) return;
+        if (!materiales.length) return aviso("No encontré materiales en ese archivo.");
+        const n = agregarALista(lista, materiales);
+        guardar(); refrescar();
+        aviso(`${n} materiales importados a la lista`);
+      } catch (e) {
+        aviso(e.message || "No se pudo leer el archivo.");
+      }
+    },
+
     carrito(el) { itemDe(el).estado = el.checked ? "carrito" : "pendiente"; guardar(); refrescar(); },
     cantidad(el) { itemDe(el).cantidad = Math.max(0, Number(el.value) || 0); guardar(); refrescar(); },
   },
@@ -399,14 +418,9 @@ export const vistaLista = {
       ir("#/listas");
     },
 
-    csv() {
-      const s = simbolo();
-      const filas = [["Material", "Categoría", "Unidad", "Cantidad", `Precio (${s})`, `Importe (${s})`, "Estado"]];
-      for (const i of lista.items) {
-        filas.push([i.nombre, categoria(i.categoriaId).nombre, unidad(i.unidadId).abrev, i.cantidad, aMoneda(i.precio), aMoneda(i.cantidad * i.precio), i.estado]);
-      }
-      const csv = filas.map((f) => f.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-      descargar(`${lista.nombre}.csv`, "﻿" + csv, "text/csv;charset=utf-8");
+    excel() {
+      exportarLista(lista);
+      aviso("Excel descargado");
     },
 
     // Texto listo para WhatsApp.

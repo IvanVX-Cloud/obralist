@@ -1,8 +1,9 @@
 // =====================================================================
 // Catálogo: tus materiales con su precio, y dónde salen más baratos.
 // =====================================================================
-import { db, guardar, nuevoId, buscar, categoria, unidad, historialPrecios, categoriasOrdenadas, esDeMiOficio } from "../datos.js";
+import { db, guardar, nuevoId, buscar, categoria, unidad, historialPrecios, categoriasOrdenadas, esDeMiOficio, asegurarCategoria, asegurarUnidad } from "../datos.js";
 import { icono } from "../iconos.js";
+import { exportarCatalogo, leerMateriales } from "../excel-datos.js";
 import { dinero, seguro, fecha, formulario, aviso, refrescar, opcionesDe, mostrar, simbolo, aMoneda, aColones, precioEditado } from "../ui.js";
 
 let filtroCategoria = "";
@@ -19,6 +20,10 @@ export const vistaCatalogo = {
       <div class="encabezado">
         <h2>Catálogo de materiales</h2>
         <button class="principal" data-accion="nuevo">+ Producto</button>
+      </div>
+      <div class="acciones-lista">
+        <button data-accion="excel">${icono("tabla")}Exportar a Excel</button>
+        <label class="boton">${icono("enviar")}Importar precios de Excel<input type="file" accept=".xlsx,.xls,.csv" data-cambio="importarExcel" hidden></label>
       </div>
       <div class="fila filtros">
         <input type="search" placeholder="Buscar material…" data-entrada="buscar" aria-label="Buscar material">
@@ -44,10 +49,46 @@ export const vistaCatalogo = {
   },
 
   cambios: {
+    // Actualiza precios de los materiales que ya existen y agrega los nuevos
+    async importarExcel(el) {
+      const archivo = el.files[0];
+      el.value = "";
+      if (!archivo) return;
+      try {
+        const materiales = await leerMateriales(archivo, { conCantidad: false });
+        if (!materiales) return;
+        let actualizados = 0, nuevos = 0;
+        for (const m of materiales) {
+          const p = db.productos.find((x) => x.nombre.toLowerCase() === m.nombre.toLowerCase());
+          if (p) {
+            if (m.precio !== null) p.precio = m.precio;
+            if (m.unidad) p.unidadId = asegurarUnidad(m.unidad);
+            if (m.categoria) p.categoriaId = asegurarCategoria(m.categoria);
+            actualizados++;
+          } else {
+            db.productos.push({
+              id: nuevoId(), nombre: m.nombre, precio: m.precio ?? 0,
+              categoriaId: asegurarCategoria(m.categoria || "Otro"), unidadId: asegurarUnidad(m.unidad || "und"),
+            });
+            nuevos++;
+          }
+        }
+        guardar(); refrescar();
+        aviso(`Catálogo: ${actualizados} actualizados, ${nuevos} nuevos`);
+      } catch (e) {
+        aviso(e.message || "No se pudo leer el archivo.");
+      }
+    },
+
     categoria(el) { filtroCategoria = el.value; refrescar(); },
   },
 
   acciones: {
+    excel() {
+      exportarCatalogo();
+      aviso("Excel descargado");
+    },
+
     nuevo() { editarProducto(null); },
     editar(el) { editarProducto(productoDe(el)); },
 

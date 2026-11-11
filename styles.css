@@ -171,7 +171,7 @@ a.boton:hover { border-color: var(--acento); }
 .pregunta summary { font-weight: 500; }
 .pregunta p { margin: 6px 0 0; }
 .pasos { margin: 0 0 8px; padding-left: 20px; line-height: 1.6; }
-.acciones-lista > * { font-size: .85rem; }
+.acciones-lista > *, .acciones-lista > label.boton, .acciones-lista > a.boton { font-size: .85rem; }
 
 /* ---------- Resumen y barras ---------- */
 .resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

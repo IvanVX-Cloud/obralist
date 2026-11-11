@@ -323,9 +323,10 @@ export function agregarALista(lista, materiales) {
     if (existente) existente.cantidad += m.cantidad;
     else lista.items.push({
       id: nuevoId(), productoId: prod?.id || null, nombre: prod?.nombre || m.nombre,
-      categoriaId: prod?.categoriaId || asegurarCategoria(m.categoria),
-      unidadId: prod?.unidadId || asegurarUnidad(m.unidad),
-      cantidad: m.cantidad, precio: prod?.precio || 0, estado: "pendiente",
+      categoriaId: prod?.categoriaId || asegurarCategoria(m.categoria || "Otro"),
+      unidadId: prod?.unidadId || asegurarUnidad(m.unidad || "und"),
+      // si el material trae su propio precio (ej. importado de Excel) se usa ese
+      cantidad: m.cantidad, precio: m.precio ?? prod?.precio ?? 0, estado: "pendiente",
     });
     n++;
   }
