@@ -145,6 +145,16 @@ button.peligro { color: var(--peligro); }
 .etiqueta-tipo { justify-self: start; display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; font-weight: 600; color: var(--suave); border: 1px solid var(--borde); padding: 2px 8px; border-radius: 99px; margin-top: 2px; }
 .etiqueta-tipo.materiales { color: var(--acento); border-color: var(--acento); }
 
+/* Mi cuenta */
+.perfil-cabecera { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 10px; }
+.avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--acento); color: #1b1300; font-weight: 800; font-size: 1.15rem; }
+.perfil-datos { display: grid; gap: 3px; min-width: 0; }
+.perfil-datos strong { font-size: 1.05rem; }
+.perfil-datos .etiqueta-oficio { justify-self: start; }
+.perfil-datos .nota { display: inline-flex; align-items: center; gap: 4px; overflow-wrap: anywhere; }
+.separador { border: none; border-top: 1px solid var(--borde); margin: 14px 0 10px; }
+.subtitulo-tarjeta { margin: 0 0 6px; font-size: .95rem; display: flex; align-items: center; gap: 6px; }
+
 /* Botón que parece enlace */
 button.enlace { background: none; border: none; padding: 6px 0; color: var(--acento); text-decoration: underline; font-size: .9rem; }
 .cuenta .formulario { margin-top: 8px; }

@@ -34,16 +34,55 @@ function hace(fecha) {
   return fecha.toLocaleDateString("es-CR", { day: "numeric", month: "short" });
 }
 
-// Tarjeta de la cuenta en la nube: iniciar sesión o ver el estado de la sincronización.
-function tarjetaCuenta() {
-  let contenido;
+let editandoPerfil = false;
+
+// "Ivan Vargas" → "IV"
+function iniciales(nombre, correo) {
+  const partes = String(nombre || correo || "").trim().split(/[\s@.]+/).filter(Boolean);
+  return ((partes[0]?.[0] || "") + (partes[1]?.[0] || "")).toUpperCase() || "?";
+}
+
+function formularioPerfil() {
+  return `
+    <form data-form="perfil" class="formulario">
+      <label>Nombre
+        <input name="nombre" value="${seguro(db.perfil.nombre)}" placeholder="Tu nombre o el de tu empresa">
+      </label>
+      <label>Ocupación
+        <input name="ocupacion" list="dl-ocupaciones" value="${seguro(db.perfil.ocupacion || "")}" placeholder="Ej. Electricista" autocomplete="off">
+        <datalist id="dl-ocupaciones">${OCUPACIONES.map((o) => `<option value="${seguro(o)}">`).join("")}</datalist>
+      </label>
+      <button class="principal ancho">Guardar perfil</button>
+    </form>
+    <p class="nota">Tu nombre y oficio aparecen cuando compartes una lista, y la app se ajusta a tu oficio.</p>`;
+}
+
+// Tarjeta "Mi cuenta": perfil (nombre y oficio) + cuenta en la nube, todo junto.
+function tarjetaMiCuenta() {
+  const { nombre, ocupacion } = db.perfil;
+  const usuario = nube.usuario;
+  const mostrarFormulario = editandoPerfil || !nombre;
+
+  const cabecera = `
+    <div class="perfil-cabecera">
+      <span class="avatar" aria-hidden="true">${seguro(iniciales(nombre, usuario?.email))}</span>
+      <div class="perfil-datos">
+        <strong>${seguro(nombre || "Sin nombre todavía")}</strong>
+        ${ocupacion ? `<span class="etiqueta-oficio">${seguro(ocupacion)}</span>` : ""}
+        <span class="nota">${usuario ? `${icono("nube")} ${seguro(usuario.email || "")}` : "Sin cuenta: tus datos están sólo en este dispositivo"}</span>
+      </div>
+      ${nombre ? `<button data-accion="editarPerfil" aria-label="Editar perfil">${icono(editandoPerfil ? "cerrar" : "editar")}</button>` : ""}
+    </div>`;
+
+  let nubeHtml;
   if (!nube.configurada) {
-    contenido = `<p class="nota">La conexión con la nube todavía no está configurada en esta versión de la app.</p>`;
+    nubeHtml = `<p class="nota">La conexión con la nube todavía no está configurada en esta versión de la app.</p>`;
   } else if (!nube.lista) {
-    contenido = `<p class="nota">Conectando con la nube…</p>`;
-  } else if (!nube.usuario) {
-    contenido = `
-      <p class="nota">Crea una cuenta gratis para respaldar tus datos y usarlos en el celular y en la computadora.
+    nubeHtml = `<p class="nota">Conectando con la nube…</p>`;
+  } else if (!usuario) {
+    nubeHtml = `
+      <h4 class="subtitulo-tarjeta">${icono("nube")}Respalda tus datos en la nube</h4>
+      <p class="nota">Crea una cuenta gratis para no perder nada y usar tus datos en el celular y en la computadora.
       Sin cuenta, la app sigue funcionando igual, sólo en este dispositivo.</p>
       ${nube.error ? `<p class="rojo">${icono("alerta")} ${seguro(nube.error)}</p>` : ""}
       <form data-form="cuenta" class="formulario">
@@ -57,8 +96,7 @@ function tarjetaCuenta() {
     const estado = nube.sincronizando ? "Sincronizando…"
       : nube.error ? `${icono("alerta")} ${seguro(nube.error)}`
       : nube.ultima ? `${icono("check", "icono-acento")} Sincronizado ${hace(nube.ultima)}` : "Pendiente de sincronizar";
-    contenido = `
-      <p>Conectado como <strong>${seguro(nube.usuario.email || "")}</strong></p>
+    nubeHtml = `
       <p class="nota ${nube.error ? "rojo" : ""}">${estado}</p>
       <p class="nota">Tus listas, catálogo, compras, gastos y bitácora se respaldan solos cuando hay internet.
       Las fotos de la bitácora todavía se quedan sólo en este dispositivo.</p>
@@ -67,7 +105,15 @@ function tarjetaCuenta() {
         <button data-accion="salir">${icono("cerrar")}Cerrar sesión</button>
       </div>`;
   }
-  return `<section class="tarjeta cuenta"><h3>${icono("nube")}Cuenta en la nube</h3>${contenido}</section>`;
+
+  return `
+    <section class="tarjeta cuenta">
+      <h3>${icono("usuario")}Mi cuenta</h3>
+      ${cabecera}
+      ${mostrarFormulario ? formularioPerfil() : ""}
+      <hr class="separador">
+      ${nubeHtml}
+    </section>`;
 }
 
 // Tarjeta de moneda: colones o dólares + tipo de cambio.
@@ -201,29 +247,13 @@ export const vistaMas = {
     return `
       <div class="encabezado"><h2>Más opciones</h2></div>
 
+      ${tarjetaMiCuenta()}
+
       ${tarjetaInstalar()}
 
       ${tarjetaMoneda()}
 
       ${tarjetaApariencia()}
-
-      <section class="tarjeta">
-        <h3>${icono("usuario")}Tu perfil</h3>
-        <form data-form="perfil" class="formulario">
-          <label>Nombre
-            <input name="nombre" value="${seguro(db.perfil.nombre)}" placeholder="Tu nombre o el de tu empresa">
-          </label>
-          <label>Ocupación
-            <input name="ocupacion" list="dl-ocupaciones" value="${seguro(db.perfil.ocupacion || "")}" placeholder="Ej. Electricista" autocomplete="off">
-            <datalist id="dl-ocupaciones">${OCUPACIONES.map((o) => `<option value="${seguro(o)}">`).join("")}</datalist>
-          </label>
-          <button class="principal ancho">Guardar perfil</button>
-        </form>
-        <p class="nota">Aparece cuando compartes una lista, para que sepan quién la manda y cuál es su labor.
-        Elige de la lista o escribe la tuya.</p>
-      </section>
-
-      ${tarjetaCuenta()}
 
       ${Object.entries(COLECCIONES).map(([clave, cfg]) => `
         <section class="tarjeta">
@@ -297,12 +327,16 @@ export const vistaMas = {
       const cambioOficio = db.perfil.ocupacion !== d.ocupacion.trim();
       db.perfil.ocupacion = d.ocupacion.trim();
       guardar();
+      editandoPerfil = false;
+      refrescar();
       aviso(cambioOficio && db.perfil.ocupacion ? `Perfil guardado. La app se ajustó para ${db.perfil.ocupacion}` : "Perfil guardado");
     },
   },
 
   acciones: {
     instalar() { instalar(); },
+
+    editarPerfil() { editandoPerfil = !editandoPerfil; refrescar(); },
 
     async recuperar() {
       const correo = document.querySelector('[data-form="cuenta"] [name="correo"]')?.value.trim();
