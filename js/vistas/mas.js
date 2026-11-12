@@ -2,7 +2,8 @@
 // "Más": perfil, cuenta, proveedores, categorías, unidades y respaldo.
 // =====================================================================
 import { db, guardar, nuevoId, hoy, buscar, reemplazarTodo, esRespaldoValido, semilla, OCUPACIONES } from "../datos.js";
-import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, dinero, aplicarApariencia, desplegable } from "../ui.js";
+import { seguro, formulario, aviso, refrescar, descargar, moneda, tipoCambio, tipoCambioManual, dinero, aplicarApariencia, desplegable, fecha } from "../ui.js";
+import { actualizarTipoCambio } from "../tipocambio.js";
 
 // Tarjeta de apariencia: tema y modo obra.
 function tarjetaApariencia() {
@@ -118,12 +119,19 @@ function tarjetaMiCuenta() {
     </section>`;
 }
 
-// Tarjeta de moneda: colones o dólares + tipo de cambio.
+// Tarjeta de moneda: colones o dólares + tipo de cambio automático (BCCR) o manual.
 function tarjetaMoneda() {
   const m = moneda();
+  const manual = tipoCambioManual();
+  const auto = db.perfil.tcAuto;
+  const colones = (n) => `₡${Number(n).toLocaleString("es-CR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const hoyIso = new Date().toISOString().slice(0, 10);
+  const infoAuto = auto
+    ? `Venta ${colones(auto.venta)}${auto.compra ? ` · compra ${colones(auto.compra)}` : ""} · ${seguro(auto.fuente)} · ${fecha(auto.fecha)}${auto.fecha < hoyIso ? " (último guardado)" : ""}`
+    : navigator.onLine ? "Consultando el tipo de cambio del día…" : "Sin internet: se consultará cuando haya conexión.";
   return desplegable("mas:moneda", {
     titulo: `${icono("moneda")}Moneda`,
-    resumen: `${m === "USD" ? "Dólares" : "Colones"} · ₡${tipoCambio()} por $1`,
+    resumen: `${m === "USD" ? "Dólares" : "Colones"} · ${colones(tipoCambio())} ${manual ? "(manual)" : "(BCCR)"}`,
     contenido: `
       <form data-form="moneda" class="formulario">
         <label>Mostrar precios en
@@ -132,13 +140,24 @@ function tarjetaMoneda() {
             <option value="USD" ${m === "USD" ? "selected" : ""}>$ Dólares</option>
           </select>
         </label>
-        <label>Tipo de cambio (₡ por $1)
-          <input name="tipoCambio" type="number" min="1" step="any" inputmode="decimal" value="${tipoCambio()}" required>
+        <label>Tipo de cambio
+          <select name="modo">
+            <option value="auto" ${!manual ? "selected" : ""}>Automático (BCCR)</option>
+            <option value="manual" ${manual ? "selected" : ""}>Manual</option>
+          </select>
+        </label>
+        <label class="ancho">Tipo de cambio manual (₡ por $1, sólo si eliges "Manual")
+          <input name="tipoCambio" type="number" min="1" step="any" inputmode="decimal" value="${Number(db.perfil.tipoCambio) > 0 ? db.perfil.tipoCambio : tipoCambio()}">
         </label>
         <button class="principal ancho">Guardar moneda</button>
       </form>
-      <p class="nota">Todo se guarda en colones; al elegir dólares se convierte con este tipo de cambio.
-      Consulta el del día en el Banco Central (BCCR). Ejemplo: ₡10 000 = ${dinero(10000)}.</p>`,
+      <div class="fila entre" style="margin-top:10px">
+        <p class="nota">${icono("tendencia")} Hoy: ${infoAuto}</p>
+        <button data-accion="actualizarTC" ${navigator.onLine ? "" : "disabled"}>${icono("restaurar")}Actualizar</button>
+      </div>
+      <p class="nota">Todo se guarda en colones; el tipo de cambio sólo se usa para mostrar y escribir en dólares.
+      En automático se actualiza solo cada día con el tipo de cambio de referencia (venta) del Banco Central.
+      Ejemplo: ₡10 000 = ${dinero(10000)}.</p>`,
   });
 }
 
@@ -327,7 +346,8 @@ export const vistaMas = {
 
     moneda(form, d) {
       db.perfil.moneda = d.moneda === "USD" ? "USD" : "CRC";
-      db.perfil.tipoCambio = Number(d.tipoCambio) > 0 ? Number(d.tipoCambio) : tipoCambio();
+      db.perfil.tipoCambioModo = d.modo === "manual" ? "manual" : "auto";
+      if (Number(d.tipoCambio) > 0) db.perfil.tipoCambio = Number(d.tipoCambio);
       guardar(); refrescar();
       aviso(db.perfil.moneda === "USD" ? "Ahora ves los precios en dólares" : "Ahora ves los precios en colones");
     },
@@ -345,6 +365,13 @@ export const vistaMas = {
 
   acciones: {
     instalar() { instalar(); },
+
+    async actualizarTC() {
+      aviso("Consultando el tipo de cambio…");
+      const ok = await actualizarTipoCambio({ forzar: true });
+      refrescar();
+      aviso(ok ? `Tipo de cambio: ₡${db.perfil.tcAuto.venta} (${db.perfil.tcAuto.fuente})` : "No se pudo consultar. Se usa el último guardado.");
+    },
 
     editarPerfil() { editandoPerfil = !editandoPerfil; refrescar(); },
 

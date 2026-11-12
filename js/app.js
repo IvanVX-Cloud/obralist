@@ -19,6 +19,7 @@ import { vistaCalculadoras } from "./vistas/calculadoras.js";
 import { vistaBitacora } from "./vistas/bitacora.js";
 import { iniciarInstalacion } from "./instalar.js";
 import { iniciarNube } from "./nube.js";
+import { iniciarTipoCambio } from "./tipocambio.js";
 
 const VISTAS = {
   listas: vistaListas,
@@ -95,3 +96,6 @@ iniciarInstalacion();
 
 // ---------- Cuenta en la nube (ver nube.js) ----------
 iniciarNube();
+
+// ---------- Tipo de cambio del dólar (ver tipocambio.js) ----------
+iniciarTipoCambio();

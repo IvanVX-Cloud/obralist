@@ -90,7 +90,7 @@ const UNIDADES_BASE = [
 ];
 
 // Tipo de cambio inicial (colones por 1 dólar). Se cambia en Más > Moneda.
-export const TIPO_CAMBIO_INICIAL = 505;
+export const TIPO_CAMBIO_INICIAL = 450; // sólo hasta la primera consulta automática
 
 // Catálogo de ejemplo para Costa Rica: [nombre, categoría, unidad, precio en COLONES].
 // Los precios son aproximados; cada quien los ajusta a su ferretería.

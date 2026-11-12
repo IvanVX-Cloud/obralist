@@ -15,7 +15,7 @@
 // =====================================================================
 import { db, guardar, alGuardar, reemplazarTodo, vacio } from "./datos.js";
 import { SUPABASE } from "./config.js";
-import { aviso, refrescar, formulario, aplicarApariencia } from "./ui.js";
+import { aviso, formulario, aplicarApariencia, refrescarSiSePuede } from "./ui.js";
 
 // Versión fija de la librería de Supabase (se descarga sólo si hay internet)
 const URL_LIBRERIA = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/+esm";
@@ -371,15 +371,6 @@ function leerEstado() {
 }
 function guardarEstado(estado) {
   try { localStorage.setItem(CLAVE_ESTADO, JSON.stringify(estado)); } catch {}
-}
-
-// No redibujar si el usuario está escribiendo o tiene una ventana abierta
-// (si no, perdería lo que estaba escribiendo).
-function refrescarSiSePuede() {
-  const activo = document.activeElement;
-  const escribiendo = activo && /INPUT|TEXTAREA|SELECT/.test(activo.tagName) && activo.closest("#vista");
-  if (document.querySelector("#dialogo")?.open || escribiendo) return;
-  refrescar();
 }
 
 // Sólo para pruebas: usar un servidor simulado en vez de Supabase.

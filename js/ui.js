@@ -31,7 +31,12 @@ export const $ = (selector) => document.querySelector(selector);
 // REGLA: todos los montos se GUARDAN en colones. La moneda elegida sólo cambia
 // cómo se MUESTRAN y cómo se ESCRIBEN. Así, cambiar de moneda nunca daña tus datos.
 export const moneda = () => (db.perfil.moneda === "USD" ? "USD" : "CRC");
-export const tipoCambio = () => (Number(db.perfil.tipoCambio) > 0 ? Number(db.perfil.tipoCambio) : TIPO_CAMBIO_INICIAL);
+// Automático (por defecto): el del BCCR que se consultó; manual: el que escribió el usuario.
+export const tipoCambioManual = () => db.perfil.tipoCambioModo === "manual";
+export function tipoCambio() {
+  if (!tipoCambioManual() && Number(db.perfil.tcAuto?.venta) > 0) return Number(db.perfil.tcAuto.venta);
+  return Number(db.perfil.tipoCambio) > 0 ? Number(db.perfil.tipoCambio) : TIPO_CAMBIO_INICIAL;
+}
 export const simbolo = () => (moneda() === "USD" ? "$" : "₡");
 
 // Colones guardados → número en la moneda elegida (para llenar un campo).
@@ -44,6 +49,15 @@ export function aMoneda(colones) {
 export function aColones(valor) {
   const v = Number(valor) || 0;
   return moneda() === "USD" ? v * tipoCambio() : v;
+}
+
+// Redibuja la pantalla, salvo que el usuario esté escribiendo o tenga una
+// ventana abierta (para no borrarle lo que está escribiendo).
+export function refrescarSiSePuede() {
+  const activo = document.activeElement;
+  const escribiendo = activo && /INPUT|TEXTAREA|SELECT/.test(activo.tagName) && activo.closest("#vista");
+  if (document.querySelector("#dialogo")?.open || escribiendo) return;
+  refrescar();
 }
 
 // Al editar: si el usuario no tocó el precio, dejamos el original (evita
