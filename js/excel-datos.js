@@ -3,6 +3,7 @@
 // (La parte técnica de armar/leer el archivo está en excel.js)
 // =====================================================================
 import { db, categoria, unidad, categoriasOrdenadas, hoy, buscar } from "./datos.js";
+import { categoriaDeItem, unidadDeItem } from "./compartir.js";
 import { crearXlsx, leerArchivo, aNumero, letra, ESTILO, TIPO_XLSX, fechaExcel } from "./excel.js";
 import { aMoneda, aColones, moneda, tipoCambio, simbolo, descargar, formulario, seguro, fecha } from "./ui.js";
 
@@ -43,10 +44,10 @@ export function exportarLista(l) {
     const r = primera + k;
     const precio = aMoneda(it.precio);
     filas.push([
-      { v: categoria(it.categoriaId).nombre, s: ESTILO.texto },
+      { v: categoriaDeItem(it).nombre, s: ESTILO.texto },
       { v: it.nombre, s: ESTILO.texto },
       { v: it.cantidad, s: ESTILO.numero },
-      { v: unidad(it.unidadId).abrev, s: ESTILO.texto },
+      { v: unidadDeItem(it).abrev, s: ESTILO.texto },
       { v: precio, s: dinero },
       { f: `C${r}*E${r}`, v: redondo(it.cantidad * precio), s: dinero }, // fórmula: cantidad × precio
       { v: ESTADOS[it.estado] || it.estado, s: ESTILO.texto },

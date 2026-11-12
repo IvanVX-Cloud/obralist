@@ -163,6 +163,10 @@ details.plegable[open] .flecha { transform: rotate(90deg); }
 .fila.fin.arriba { margin-top: 0; margin-bottom: 4px; }
 .grupo-catalogo .plegable-contenido { padding-top: 4px; }
 
+/* Listas compartidas en vivo */
+.en-vivo { margin: 6px 0 0; display: inline-flex; align-items: center; gap: 6px; font-size: .85rem;
+  color: var(--ok); border: 1px solid var(--ok); border-radius: 99px; padding: 3px 10px; }
+
 /* Mi cuenta */
 .perfil-cabecera { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 10px; }
 .avatar { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--acento); color: #1b1300; font-weight: 800; font-size: 1.15rem; }

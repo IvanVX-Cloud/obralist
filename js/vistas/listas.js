@@ -13,6 +13,8 @@ import { icono } from "../iconos.js";
 import { registrosDe, ultimoAvance } from "./bitacora.js";
 import { borrarFoto } from "../fotos.js";
 import { exportarLista, leerMateriales } from "../excel-datos.js";
+import { compartir, esCompartidaConmigo, categoriaDeItem, unidadDeItem } from "../compartir.js";
+import { nube, invitarALista, quitarDeLista, salirDeListaCompartida } from "../nube.js";
 import {
   $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir,
   simbolo, aMoneda, aColones, precioEditado,
@@ -26,9 +28,10 @@ export const vistaListas = {
   tab: "listas",
 
   render() {
-    const propias = db.listas.filter((l) => !l.archivada && !l.recibida);
-    const recibidas = db.listas.filter((l) => !l.archivada && l.recibida);
-    const archivadas = db.listas.filter((l) => l.archivada);
+    const propias = db.listas.filter((l) => !l.archivada && !l.recibida && !esCompartidaConmigo(l));
+    const recibidas = db.listas.filter((l) => !l.archivada && l.recibida && !esCompartidaConmigo(l));
+    const archivadas = db.listas.filter((l) => l.archivada && !esCompartidaConmigo(l));
+    const conmigo = db.listas.filter(esCompartidaConmigo);
     const { nombre, ocupacion } = db.perfil;
     const saludo = nombre
       ? `<p class="saludo">Hola, <strong>${seguro(nombre.split(" ")[0])}</strong>${ocupacion ? ` <span class="etiqueta-oficio">${seguro(ocupacion)}</span>` : ""}</p>`
@@ -43,6 +46,10 @@ export const vistaListas = {
       ${propias.length
         ? `<div class="tarjetas">${propias.map(tarjetaLista).join("")}</div>`
         : `<p class="vacio">Crea tu primera lista, por ejemplo "Instalación eléctrica Casa López".</p>`}
+
+      ${conmigo.length ? `
+        <div class="encabezado"><h2>${icono("usuario")}Compartidas conmigo</h2></div>
+        <div class="tarjetas">${conmigo.map(tarjetaLista).join("")}</div>` : ""}
 
       ${bloqueHerramientas()}
 
@@ -149,7 +156,9 @@ export const vistaListas = {
 function tarjetaLista(l) {
   const t = totalesLista(l);
   const pct = t.total ? Math.round((t.comprado / t.total) * 100) : 0;
-  const sub = [l.recibida ? `De ${quienSoy(l.recibida.de, l.recibida.ocupacion)}` : "", l.cliente, `${l.items.length} ${l.items.length === 1 ? "material" : "materiales"}`].filter(Boolean);
+  const enVivo = esCompartidaConmigo(l) ? `En vivo · de ${l._compartida.email}`
+    : compartir.mias[l.id]?.length ? `En vivo con ${compartir.mias[l.id].length}` : "";
+  const sub = [enVivo, l.recibida ? `De ${quienSoy(l.recibida.de, l.recibida.ocupacion)}` : "", l.cliente, `${l.items.length} ${l.items.length === 1 ? "material" : "materiales"}`].filter(Boolean);
   return `
     <a class="tarjeta lista-tarjeta" href="#/lista/${l.id}">
       <strong>${seguro(l.nombre)}</strong>
@@ -178,12 +187,19 @@ export const vistaLista = {
     const comprados = l.items.filter((i) => i.estado === "comprado");
     const enCarrito = l.items.filter((i) => i.estado === "carrito");
     const info = [l.cliente, l.direccion, l.recibida ? `Recibida de ${quienSoy(l.recibida.de, l.recibida.ocupacion)}` : ""].filter(Boolean);
+    const deOtro = esCompartidaConmigo(l);
+    const invitados = compartir.mias[l.id] || [];
+    const avisoVivo = deOtro
+      ? `<p class="en-vivo">${icono("usuario")} Compartida contigo por <strong>${seguro(l._compartida.email)}</strong>. Los cambios se ven al instante para los dos.</p>`
+      : invitados.length
+        ? `<p class="en-vivo">${icono("usuario")} En vivo con ${invitados.map(seguro).join(", ")}</p>` : "";
 
     return `
       <a href="#/listas" class="volver">${icono("volver")} Mis listas</a>
       <div>
         <h2 class="titulo-lista">${seguro(l.nombre)}</h2>
         ${info.length ? `<p class="nota">${info.map(seguro).join(" · ")}</p>` : ""}
+        ${avisoVivo}
       </div>
 
       <div class="acciones-lista">
@@ -195,8 +211,11 @@ export const vistaLista = {
         <button data-accion="excel">${icono("tabla")}Exportar a Excel</button>
         <label class="boton">${icono("enviar")}Importar de Excel<input type="file" accept=".xlsx,.xls,.csv" data-cambio="importarExcel" hidden></label>
         <button data-accion="gasto">${icono("billetera")}Otro gasto</button>
+        ${deOtro
+          ? `<button data-accion="salirCompartida" class="peligro">${icono("cerrar")}Salir de la lista</button>`
+          : `<button data-accion="enVivo">${icono("usuario")}Compartir en vivo</button>
         <button data-accion="archivar">${l.archivada ? `${icono("restaurar")}Desarchivar` : `${icono("archivar")}Archivar`}</button>
-        <button data-accion="borrar" class="peligro">${icono("borrar")}Borrar</button>
+        <button data-accion="borrar" class="peligro">${icono("borrar")}Borrar</button>`}
       </div>
 
       <section class="resumen">
@@ -401,6 +420,48 @@ export const vistaLista = {
 
     gasto() { nuevoGasto(lista.id); },
 
+    // Invitar o quitar personas que editan esta lista en tiempo real
+    async enVivo() {
+      if (!nube.usuario) return aviso("Primero inicia sesión en Más > Mi cuenta. La otra persona también necesita una cuenta de ObraList.");
+      const invitados = compartir.mias[lista.id] || [];
+      const d = await formulario({
+        titulo: "Compartir en vivo",
+        boton: "Guardar",
+        campos: [
+          { tipo: "html", html: `La otra persona podrá ver y editar <strong>sólo esta lista</strong> desde su ObraList, y los cambios se ven al instante para los dos. Necesita tener cuenta con ese correo.` },
+          { nombre: "correo", etiqueta: "Invitar a (correo)", tipo: "email", ancho: true, ayuda: "correo@ejemplo.com" },
+          invitados.length && { nombre: "quitar", etiqueta: "Quitar acceso a", tipo: "select", ancho: true, valor: "",
+            opciones: [{ valor: "", texto: "— Nadie —" }, ...invitados.map((c) => ({ valor: c, texto: c }))] },
+        ].filter(Boolean),
+      });
+      if (!d) return;
+      try {
+        if (d.correo) {
+          aviso("Compartiendo…");
+          await invitarALista(lista.id, d.correo);
+          aviso(`Listo: ${d.correo.toLowerCase()} ya puede ver y editar esta lista`);
+        }
+        if (d.quitar) {
+          await quitarDeLista(lista.id, d.quitar);
+          aviso(`${d.quitar} ya no tiene acceso`);
+        }
+        refrescar();
+      } catch (e) {
+        aviso(e.message || "No se pudo compartir");
+      }
+    },
+
+    async salirCompartida() {
+      if (!confirm(`¿Salir de "${lista.nombre}"?\nDejarás de verla; la lista sigue siendo de ${lista._compartida.email}.`)) return;
+      try {
+        await salirDeListaCompartida(lista);
+        aviso("Saliste de la lista");
+        ir("#/listas");
+      } catch (e) {
+        aviso(e.message || "No se pudo salir de la lista");
+      }
+    },
+
     archivar() {
       lista.archivada = !lista.archivada;
       guardar();
@@ -455,7 +516,7 @@ export const vistaLista = {
         lista: {
           nombre: lista.nombre, cliente: lista.cliente, direccion: lista.direccion, presupuesto: lista.presupuesto,
           items: lista.items.map((i) => ({
-            nombre: i.nombre, categoria: categoria(i.categoriaId).nombre, unidad: unidad(i.unidadId).abrev,
+            nombre: i.nombre, categoria: categoriaDeItem(i).nombre, unidad: unidadDeItem(i).abrev,
             cantidad: i.cantidad, precio: i.precio,
           })),
         },
@@ -574,11 +635,11 @@ function grupos(items, sonComprados) {
   const orden = (id) => { const i = ordenCat.findIndex((c) => c.id === id); return i < 0 ? 999 : i; };
   const porCat = new Map();
   for (const it of items) {
-    if (!porCat.has(it.categoriaId)) porCat.set(it.categoriaId, []);
-    porCat.get(it.categoriaId).push(it);
+    const c = categoriaDeItem(it); // también entiende categorías de listas compartidas
+    if (!porCat.has(c.id)) porCat.set(c.id, { c, its: [] });
+    porCat.get(c.id).its.push(it);
   }
-  return [...porCat].sort((a, b) => orden(a[0]) - orden(b[0])).map(([catId, its]) => {
-    const c = categoria(catId);
+  return [...porCat.values()].sort((a, b) => orden(a.c.id) - orden(b.c.id)).map(({ c, its }) => {
     const subtotal = its.reduce((s, i) => s + i.cantidad * i.precio, 0);
     return `
       <div class="grupo">
@@ -589,7 +650,7 @@ function grupos(items, sonComprados) {
 }
 
 function filaItem(it, comprado) {
-  const u = unidad(it.unidadId);
+  const u = unidadDeItem(it);
   let extra = "";
   if (comprado && it.compraId) {
     const c = buscar("compras", it.compraId);
@@ -616,11 +677,15 @@ function textoLista(l) {
   if (l.cliente) lineas.push(`Cliente: ${l.cliente}`);
   if (l.direccion) lineas.push(`Dirección: ${l.direccion}`);
   const pendientes = l.items.filter((i) => i.estado !== "comprado");
-  for (const c of categoriasOrdenadas()) {
-    const its = pendientes.filter((i) => i.categoriaId === c.id);
-    if (!its.length) continue;
-    lineas.push("", `*${c.nombre}*`);
-    for (const i of its) lineas.push(`• ${i.cantidad} ${unidad(i.unidadId).abrev} — ${i.nombre}`);
+  const porCat = new Map();
+  for (const i of pendientes) {
+    const nombre = categoriaDeItem(i).nombre;
+    if (!porCat.has(nombre)) porCat.set(nombre, []);
+    porCat.get(nombre).push(i);
+  }
+  for (const [nombre, its] of porCat) {
+    lineas.push("", `*${nombre}*`);
+    for (const i of its) lineas.push(`• ${i.cantidad} ${unidadDeItem(i).abrev} — ${i.nombre}`);
   }
   const total = pendientes.reduce((s, i) => s + i.cantidad * i.precio, 0);
   lineas.push("", `Total estimado: ${dinero(total)}`);

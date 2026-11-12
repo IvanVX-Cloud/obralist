@@ -16,6 +16,10 @@
 import { db, guardar, alGuardar, reemplazarTodo, vacio } from "./datos.js";
 import { SUPABASE } from "./config.js";
 import { aviso, formulario, aplicarApariencia, refrescarSiSePuede } from "./ui.js";
+import {
+  sincronizarCompartidas, escucharCambios, dejarDeEscuchar, olvidarCompartidas, anotarNombres,
+  invitar, quitarInvitado, salirDeLista,
+} from "./compartir.js";
 
 // Versión fija de la librería de Supabase (se descarga sólo si hay internet)
 const URL_LIBRERIA = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/+esm";
@@ -51,7 +55,7 @@ export async function iniciarNube() {
     const { data } = await cliente.auth.getSession();
     nube.usuario = data.session?.user || null;
     nube.ultima = leerEstado().fecha ? new Date(leerEstado().fecha) : null;
-    if (nube.usuario) programar(300);
+    if (nube.usuario) { programar(300); escucharCambios(cliente, () => programar(400)); }
   } catch (e) {
     nube.error = navigator.onLine ? "No se pudo conectar con la nube." : "Sin internet: tus datos se guardan en el celular.";
   } finally {
@@ -70,7 +74,11 @@ async function obtenerCliente() {
     nube.usuario = sesion?.user || null;
     // No llamar a Supabase directo aquí adentro: se usa setTimeout.
     if (evento === "PASSWORD_RECOVERY") setTimeout(pedirNuevaContrasena, 0);
-    if (evento === "SIGNED_IN") { limpiarDireccion(); programar(0); }
+    if (evento === "SIGNED_IN") {
+      limpiarDireccion();
+      programar(0);
+      setTimeout(() => escucharCambios(cliente, () => programar(400)), 0);
+    }
     refrescarSiSePuede();
   });
   return cliente;
@@ -119,8 +127,14 @@ async function pedirNuevaContrasena() {
 }
 
 export async function salir() {
+  if (cliente) dejarDeEscuchar(cliente);
   await cliente?.auth.signOut();
   localStorage.removeItem(CLAVE_ESTADO);
+  // las listas que otros me compartían ya no se pueden ver sin sesión
+  olvidarCompartidas();
+  db.listas = db.listas.filter((l) => !l._compartida);
+  aplicando = true;
+  try { guardar(); } finally { aplicando = false; }
   nube.usuario = null;
   nube.ultima = null;
   refrescarSiSePuede();
@@ -162,6 +176,14 @@ export async function sincronizar({ manual = false } = {}) {
     if (estado.usuario !== nube.usuario.id) estado = await primeraVez(nube.usuario.id);
     const bajados = await bajarCambios(estado);
     await subirCambios(estado);
+    // Listas que otras personas me comparten (ver compartir.js)
+    let deOtros = 0;
+    try { deOtros = await sincronizarCompartidas(cliente, nube.usuario, huella); }
+    catch (e) { console.warn("Listas compartidas", e); }
+    if (deOtros) {
+      aplicando = true;
+      try { guardar(); } finally { aplicando = false; }
+    }
     estado.fecha = new Date().toISOString();
     guardarEstado(estado);
     nube.ultima = new Date(estado.fecha);
@@ -285,7 +307,7 @@ function combinar(R, L) {
   enlazar("productos", "nombre", (p) => ({ ...p, categoriaId: nuevoId("categorias", p.categoriaId), unidadId: nuevoId("unidades", p.unidadId) }));
   const item = (i) => ({ ...i, categoriaId: nuevoId("categorias", i.categoriaId), unidadId: nuevoId("unidades", i.unidadId), productoId: nuevoId("productos", i.productoId) });
   const falta = (col, x) => !R[col].some((y) => y.id === x.id);
-  for (const l of L.listas) if (falta("listas", l)) R.listas.push({ ...l, items: l.items.map(item) });
+  for (const l of L.listas) if (!l._compartida && falta("listas", l)) R.listas.push({ ...l, items: l.items.map(item) });
   for (const c of L.compras) if (falta("compras", c)) R.compras.push({ ...c, proveedorId: nuevoId("proveedores", c.proveedorId), items: c.items.map(item) });
   for (const g of L.gastos) if (falta("gastos", g)) R.gastos.push(g);
   for (const b of L.bitacora) if (falta("bitacora", b)) R.bitacora.push(b);
@@ -299,7 +321,15 @@ function combinar(R, L) {
 // Todo lo que hay en el celular, como "coleccion:id" → { coleccion, id, datos }
 function cosasLocales() {
   const m = new Map();
-  for (const col of COLECCIONES) for (const x of db[col] || []) m.set(`${col}:${x.id}`, { coleccion: col, id: x.id, datos: x });
+  for (const col of COLECCIONES) {
+    for (const x of db[col] || []) {
+      if (col === "listas") {
+        if (x._compartida) continue; // es de otra persona: se sincroniza en compartir.js
+        anotarNombres(x);
+      }
+      m.set(`${col}:${x.id}`, { coleccion: col, id: x.id, datos: x });
+    }
+  }
   m.set("perfil:perfil", { coleccion: "perfil", id: "perfil", datos: db.perfil });
   return m;
 }
@@ -371,6 +401,28 @@ function leerEstado() {
 }
 function guardarEstado(estado) {
   try { localStorage.setItem(CLAVE_ESTADO, JSON.stringify(estado)); } catch {}
+}
+
+// ---------- Compartir listas (las usa la pantalla de la lista) ----------
+function necesitaSesion() {
+  if (!cliente || !nube.usuario) throw new Error("Inicia sesión en Más > Mi cuenta para compartir listas en vivo.");
+  if (!navigator.onLine) throw new Error("Necesitas internet para compartir.");
+}
+export async function invitarALista(listaId, correo) {
+  necesitaSesion();
+  await sincronizar(); // primero, que la lista exista en la nube
+  await invitar(cliente, listaId, correo);
+  await sincronizar();
+}
+export async function quitarDeLista(listaId, correo) {
+  necesitaSesion();
+  await quitarInvitado(cliente, nube.usuario.id, listaId, correo);
+  await sincronizar();
+}
+export async function salirDeListaCompartida(lista) {
+  necesitaSesion();
+  await salirDeLista(cliente, lista, nube.usuario.email || "");
+  await sincronizar();
 }
 
 // Sólo para pruebas: usar un servidor simulado en vez de Supabase.
