@@ -16,7 +16,7 @@ export const SUPABASE = {
 // Contacto de soporte. Deja un campo vacío ("") para que no aparezca.
 export const SOPORTE = {
   // Correo de soporte, ej. "soporte@obralist.com"
-  correo: "",
+  correo: "obralist.support@gmail.com",
   // WhatsApp con código de país 506, sin "+" ni espacios, ej. "50688887777"
   whatsapp: "",
   // Página para reportar problemas (necesita cuenta de GitHub)
