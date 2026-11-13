@@ -16,7 +16,7 @@ import { exportarLista, leerMateriales } from "../excel-datos.js";
 import { compartir, esCompartidaConmigo, categoriaDeItem, unidadDeItem } from "../compartir.js";
 import { nube, invitarALista, quitarDeLista, salirDeListaCompartida } from "../nube.js";
 import {
-  $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir,
+  $, dinero, seguro, fecha, formulario, aviso, refrescar, descargar, opcionesDe, ir, mostrar, estadoPresupuesto,
   simbolo, aMoneda, aColones, precioEditado,
 } from "../ui.js";
 import { nuevoGasto } from "./gastos.js";
@@ -196,26 +196,13 @@ export const vistaLista = {
 
     return `
       <a href="#/listas" class="volver">${icono("volver")} Mis listas</a>
-      <div>
-        <h2 class="titulo-lista">${seguro(l.nombre)}</h2>
-        ${info.length ? `<p class="nota">${info.map(seguro).join(" · ")}</p>` : ""}
-        ${avisoVivo}
-      </div>
-
-      <div class="acciones-lista">
-        <a class="boton" href="#/bitacora/${l.id}">${icono("bitacora")}Bitácora</a>
-        <a class="boton" href="#/calculadoras/${l.id}">${icono("calculadora")}Calcular</a>
-        <button data-accion="editar">${icono("editar")}Editar</button>
-        <button data-accion="compartirTexto">${icono("compartir")}Compartir</button>
-        <button data-accion="compartirArchivo">${icono("enviar")}Enviar archivo</button>
-        <button data-accion="excel">${icono("tabla")}Exportar a Excel</button>
-        <label class="boton">${icono("enviar")}Importar de Excel<input type="file" accept=".xlsx,.xls,.csv" data-cambio="importarExcel" hidden></label>
-        <button data-accion="gasto">${icono("billetera")}Otro gasto</button>
-        ${deOtro
-          ? `<button data-accion="salirCompartida" class="peligro">${icono("cerrar")}Salir de la lista</button>`
-          : `<button data-accion="enVivo">${icono("usuario")}Compartir en vivo</button>
-        <button data-accion="archivar">${l.archivada ? `${icono("restaurar")}Desarchivar` : `${icono("archivar")}Archivar`}</button>
-        <button data-accion="borrar" class="peligro">${icono("borrar")}Borrar</button>`}
+      <div class="cabecera-lista">
+        <div>
+          <h2 class="titulo-lista">${seguro(l.nombre)}</h2>
+          ${info.length ? `<p class="nota">${info.map(seguro).join(" · ")}</p>` : ""}
+          ${avisoVivo}
+        </div>
+        <button class="atajo-herramientas" data-accion="irHerramientas" aria-label="Ir a las herramientas de la lista" title="Herramientas">${icono("mas")}</button>
       </div>
 
       <section class="resumen">
@@ -259,6 +246,8 @@ export const vistaLista = {
           <summary>${icono("check")} Comprados (${comprados.length}) · ${dinero(t.comprado)}</summary>
           ${grupos(comprados, true)}
         </details>` : ""}
+
+      ${herramientasLista(l, deOtro)}
 
       ${enCarrito.length ? `
         <div class="barra-carrito">
@@ -419,6 +408,30 @@ export const vistaLista = {
     },
 
     gasto() { nuevoGasto(lista.id); },
+
+    irHerramientas() {
+      document.querySelector("#herramientas")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    },
+
+    // Un solo botón "Compartir" con las tres formas juntas
+    compartirMenu() {
+      const opcion = (accion, ico, titulo, detalle) => `
+        <button type="button" class="opcion-menu" data-opcion="${accion}">
+          ${icono(ico, "icono-grande icono-acento")}
+          <span><strong>${titulo}</strong><span class="nota">${detalle}</span></span>
+        </button>`;
+      mostrar("Compartir lista", `
+        <div class="menu-opciones">
+          ${esCompartidaConmigo(lista) ? "" : opcion("enVivo", "usuario", "Compartir en vivo", "La otra persona la edita contigo y los cambios se ven al instante")}
+          ${opcion("compartirTexto", "mensaje", "Mandar por WhatsApp", "Como texto, para que la lean o la lleven a la ferretería")}
+          ${opcion("compartirArchivo", "enviar", "Enviar archivo de ObraList", "La otra persona la importa en su app (Recibidas)")}
+        </div>`);
+      // la ventana está fuera de la pantalla principal: sus botones se conectan aquí
+      const dlg = document.querySelector("#dialogo");
+      dlg.querySelectorAll("[data-opcion]").forEach((b) => {
+        b.addEventListener("click", () => { dlg.close(); vistaLista.acciones[b.dataset.opcion](); });
+      });
+    },
 
     // Invitar o quitar personas que editan esta lista en tiempo real
     async enVivo() {
@@ -614,18 +627,50 @@ function bloqueBitacora(l) {
     </a>`;
 }
 
+// Herramientas al final de la lista: primero lo más usado; borrar, en rojo, al último.
+function herramientasLista(l, deOtro) {
+  const grande = (accion, ico, texto, href) => href
+    ? `<a class="herramienta" href="${href}">${icono(ico, "icono-grande")}<span>${texto}</span></a>`
+    : `<button class="herramienta" data-accion="${accion}">${icono(ico, "icono-grande")}<span>${texto}</span></button>`;
+  return `
+    <section class="tarjeta herramientas" id="herramientas">
+      <h3>${icono("mas")}Herramientas de la lista</h3>
+      <div class="herramientas-grandes">
+        ${grande("", "bitacora", "Bitácora", `#/bitacora/${l.id}`)}
+        ${grande("", "calculadora", "Calcular", `#/calculadoras/${l.id}`)}
+        ${grande("compartirMenu", "compartir", "Compartir")}
+        ${grande("gasto", "billetera", "Otro gasto")}
+      </div>
+
+      <h4 class="subtitulo-tarjeta">${icono("tabla")}Excel</h4>
+      <div class="acciones-lista">
+        <button data-accion="excel">${icono("descargar")}Exportar a Excel</button>
+        <label class="boton">${icono("enviar")}Importar de Excel<input type="file" accept=".xlsx,.xls,.csv" data-cambio="importarExcel" hidden></label>
+      </div>
+
+      <h4 class="subtitulo-tarjeta">${icono("listas")}Lista</h4>
+      <div class="acciones-lista">
+        <button data-accion="editar">${icono("editar")}Editar datos</button>
+        ${deOtro ? "" : `<button data-accion="archivar">${l.archivada ? `${icono("restaurar")}Desarchivar` : `${icono("archivar")}Archivar`}</button>`}
+      </div>
+    </section>
+
+    <div class="zona-peligro">
+      ${deOtro
+        ? `<button data-accion="salirCompartida" class="boton-peligro">${icono("cerrar")}Salir de la lista</button>`
+        : `<button data-accion="borrar" class="boton-peligro">${icono("borrar")}Borrar lista</button>`}
+    </div>`;
+}
+
 function bloquePresupuesto(l, t) {
   if (!(l.presupuesto > 0)) return "";
-  const pasado = t.gastadoReal > l.presupuesto;
-  const pct = Math.min(100, (t.gastadoReal / l.presupuesto) * 100);
   return `
     <section class="tarjeta">
       <div class="fila entre">
-        <span>Gastado real <span class="nota">(compras ${dinero(t.compras)} + otros ${dinero(t.otros)})</span></span>
-        <strong class="${pasado ? "rojo" : ""}">${dinero(t.gastadoReal)} de ${dinero(l.presupuesto)}</strong>
+        <span>Presupuesto</span><strong>${dinero(l.presupuesto)}</strong>
       </div>
-      <div class="barra-progreso ${pasado ? "pasado" : ""}"><div style="width:${pct}%"></div></div>
-      ${pasado ? `<p class="rojo">${icono("alerta")} Te pasaste del presupuesto por ${dinero(t.gastadoReal - l.presupuesto)}</p>` : ""}
+      ${estadoPresupuesto(t.gastadoReal, l.presupuesto)}
+      <p class="nota">Gastado real = compras ${dinero(t.compras)} + gastos ${dinero(t.otros)}</p>
     </section>`;
 }
 

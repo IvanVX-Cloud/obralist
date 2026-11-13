@@ -185,6 +185,22 @@ export function descargar(nombreArchivo, contenido, tipo) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// Barra de presupuesto que además EXPLICA cómo vas:
+//   menos de 85 % → "Vas bien" (verde) · 85 a 100 % → "Cuidado" (naranja) · más → "Te pasaste" (rojo)
+export function estadoPresupuesto(gastado, presupuesto) {
+  const pct = presupuesto > 0 ? (gastado / presupuesto) * 100 : 0;
+  const queda = presupuesto - gastado;
+  const estado = pct > 100 ? "pasado" : pct >= 85 ? "cuidado" : "bien";
+  const mensaje = estado === "pasado" ? `${icono("alerta")} Te pasaste por ${dinero(-queda)}`
+    : estado === "cuidado" ? `${icono("alerta")} Cuidado: te quedan ${dinero(queda)}`
+    : `${icono("check")} Vas bien: te quedan ${dinero(queda)}`;
+  return `
+    <div class="presupuesto ${estado}">
+      <div class="barra-progreso"><div style="width:${Math.min(100, pct)}%"></div></div>
+      <div class="fila entre"><span>${dinero(gastado)} gastado (${Math.round(pct)} %)</span><strong>${mensaje}</strong></div>
+    </div>`;
+}
+
 // Barras horizontales sencillas para los reportes.
 export function barras(entradas, { ordenar = true } = {}) {
   const filas = ordenar ? [...entradas].sort((a, b) => b[1] - a[1]) : entradas;

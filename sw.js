@@ -5,7 +5,7 @@
 // archivo y guarda una copia; si no hay señal (en la obra), usa la copia guardada.
 // Así ya no hace falta cambiar VERSION cada vez que editas algo; sólo cuando
 // agregues o quites archivos de la lista ARCHIVOS.
-const VERSION = "obralist-v16";
+const VERSION = "obralist-v17";
 
 // Ojo: no ponemos "./index.html" porque Netlify lo redirige a "./" y una
 // respuesta redirigida en caché puede romper la app sin internet.
