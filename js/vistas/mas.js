@@ -24,7 +24,7 @@ function tarjetaApariencia() {
       </form>`,
   });
 }
-import { VERSION_APP, SOPORTE } from "../config.js";
+import { SOPORTE } from "../config.js";
 import { icono, ICONOS_CATEGORIA } from "../iconos.js";
 import { nube, entrar, crearCuenta, recuperarContrasena, salir, sincronizar } from "../nube.js";
 
@@ -163,7 +163,7 @@ function tarjetaMoneda() {
 
 // Tarjeta de ayuda: preguntas frecuentes + formas de contacto.
 function tarjetaSoporte() {
-  const info = `ObraList ${VERSION_APP} · ${navigator.userAgent}`;
+  const info = `ObraList versión beta · ${navigator.userAgent}`;
   const botones = [];
   if (SOPORTE.whatsapp) {
     const texto = encodeURIComponent("Hola, necesito ayuda con ObraList.");
