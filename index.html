@@ -1,0 +1,71 @@
+<!doctype html>
+<!--
+  ObraList — Estructura (HTML)
+  Esta página es sólo el "esqueleto": barra superior, un espacio para la
+  pantalla activa (#vista) y las pestañas de abajo. El contenido de cada
+  pantalla lo dibujan los archivos en js/vistas/.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ObraList</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- PWA: nombre, ícono y colores para instalarla en el celular -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1f1a14">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ObraList">
+</head>
+<body>
+  <header class="barra">
+    <div class="barra-interior">
+      <a href="#/listas" class="marca" aria-label="ObraList, ir al inicio">
+        <!-- Logo: un muro de ladrillos (las filas parecen renglones de una lista), dibujado con SVG
+             para que se vea nítido en cualquier tamaño. Mismos colores que el ícono de instalación. -->
+        <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+          <rect width="48" height="48" rx="12" fill="#e8892b"/>
+          <rect x="9" y="14.5" width="12" height="6" rx="1" fill="#1b1300"/>
+          <rect x="22" y="14.5" width="12" height="6" rx="1" fill="#1b1300"/>
+          <rect x="15" y="21.5" width="12" height="6" rx="1" fill="#1b1300"/>
+          <rect x="28" y="21.5" width="12" height="6" rx="1" fill="#1b1300"/>
+          <rect x="9" y="28.5" width="12" height="6" rx="1" fill="#1b1300"/>
+          <rect x="22" y="28.5" width="12" height="6" rx="1" fill="#1b1300"/>
+        </svg>
+        <span class="marca-texto">
+          <span class="marca-nombre">Obra<span>List</span></span>
+          <span class="marca-lema">Materiales y gastos</span>
+        </span>
+      </a>
+      <div class="barra-botones">
+        <button id="btnInstalar" type="button" class="instalar" hidden><span data-icono="descargar"></span>Instalar</button>
+      </div>
+    </div>
+    <!-- Saludo: app.js lo llena sólo en el inicio, si ya pusiste tu nombre -->
+    <p id="saludoBarra" class="barra-saludo" hidden></p>
+    <p id="ayudaIos" class="sub" hidden>En iPhone: toca Compartir y luego "Agregar a inicio".</p>
+  </header>
+
+  <!-- Barra roja cuando no se pudo guardar (la maneja app.js) -->
+  <div id="errorGuardado" class="barra-error" role="alert" hidden></div>
+
+  <!-- Aquí app.js pinta la pantalla que toque según la URL (#/listas, #/catalogo…) -->
+  <main id="vista" class="contenedor"></main>
+
+  <nav class="tabs" aria-label="Secciones">
+    <a href="#/listas" data-tab="listas"><span data-icono="listas"></span>Listas</a>
+    <a href="#/catalogo" data-tab="catalogo"><span data-icono="catalogo"></span>Catálogo</a>
+    <a href="#/gastos" data-tab="gastos"><span data-icono="gastos"></span>Cuentas</a>
+    <a href="#/mas" data-tab="mas"><span data-icono="mas"></span>Más</a>
+  </nav>
+
+  <!-- Ventana para formularios (la usa ui.js) y avisos flotantes -->
+  <dialog id="dialogo"></dialog>
+  <div id="aviso" role="status" hidden></div>
+
+  <!-- type="module" permite dividir el código en varios archivos con import/export -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
