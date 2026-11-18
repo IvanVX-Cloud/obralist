@@ -30,6 +30,7 @@ export const ICONOS = {
   cerrar: '<path d="M6 6l12 12M18 6L6 18"/>',
   check: '<path d="M5 12l5 5 9-10"/>',
   buscar: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  candado: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   ojo: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   ojoTachado: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>',
   agregarLista: '<path d="M4 6h10M4 12h10M4 18h6M18 14v6M15 17h6"/>',

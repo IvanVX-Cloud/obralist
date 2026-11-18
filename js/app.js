@@ -18,6 +18,7 @@ import { vistaCatalogo } from "./vistas/catalogo.js";
 import { vistaGastos } from "./vistas/gastos.js";
 import { vistaMas } from "./vistas/mas.js";
 import { vistaBitacora } from "./vistas/bitacora.js";
+import { vistaPrivacidad, vistaTerminos } from "./vistas/legal.js";
 import { guiaSiEsNueva } from "./guia.js";
 import { iniciarInstalacion } from "./instalar.js";
 import { iniciarNube } from "./nube.js";
@@ -31,6 +32,8 @@ const VISTAS = {
   gastos: vistaGastos,
   mas: vistaMas,
   bitacora: vistaBitacora,
+  privacidad: vistaPrivacidad,
+  terminos: vistaTerminos,
 };
 
 let actual = vistaListas;

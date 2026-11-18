@@ -108,6 +108,8 @@ function tarjetaMiCuenta() {
       <form data-form="cuenta" class="formulario">
         <label class="ancho">Correo<input name="correo" type="email" autocomplete="email" required></label>
         <label class="ancho">Contraseña<input name="contrasena" type="password" autocomplete="current-password" minlength="6" required></label>
+        <p class="nota ancho">Al crear una cuenta aceptas los <a href="#/terminos">Términos y condiciones</a>
+          y la <a href="#/privacidad">Política de privacidad</a>.</p>
         <button class="principal" value="entrar">Entrar</button>
         <button value="crear">Crear cuenta</button>
       </form>
@@ -195,7 +197,7 @@ function tarjetaSoporte() {
     botones.push(`<a class="boton" href="${SOPORTE.github}" target="_blank" rel="noopener">${icono("alerta")}Reportar un problema</a>`);
   }
   const preguntas = [
-    ["¿Dónde se guardan mis datos?", "En este dispositivo, dentro del navegador. Nadie más los ve. Haz respaldos de vez en cuando (abajo, en Respaldo)."],
+    ["¿Dónde se guardan mis datos?", "En este dispositivo, dentro del navegador. Si creas una cuenta, también se guarda una copia en la nube para que no la pierdas y la uses en otros dispositivos. Nunca vendemos tus datos. Haz respaldos de vez en cuando (abajo, en Respaldo). Más detalles en la <a href=\"#/privacidad\">Política de privacidad</a>."],
     ["¿Cómo paso mis datos a otro celular?", "Aquí en Más, toca Descargar respaldo; mándate el archivo y en el otro celular usa Restaurar respaldo."],
     ["¿Cómo comparto una lista con alguien?", "Abre la lista, toca Opciones y luego Compartir: en vivo (los dos la editan), por WhatsApp como texto, o como archivo de ObraList."],
     ["¿Cómo reuso una lista para otro proyecto?", "Abre la lista, toca Opciones y luego Duplicar: se crea otra igual, con todo por comprar."],
@@ -333,7 +335,8 @@ export const vistaMas = {
 
       ${tarjetaSoporte()}
 
-      <p class="nota centro">ObraList · Versión beta · Hecha en Costa Rica</p>`;
+      <p class="nota centro">ObraList · Versión beta · Hecha en Costa Rica<br>
+        <a href="#/privacidad">Política de privacidad</a> · <a href="#/terminos">Términos y condiciones</a></p>`;
   },
 
   formularios: {

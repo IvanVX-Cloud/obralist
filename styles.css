@@ -216,6 +216,9 @@ details.plegable[open] .flecha { transform: rotate(90deg); }
 
 /* Barra de arriba: botón de instalar a la derecha */
 .barra-botones { display: flex; align-items: center; gap: 8px; }
+/* Política de privacidad y términos (js/vistas/legal.js) */
+.tarjeta.legal p, .tarjeta.legal li { line-height: 1.55; margin: 8px 0; }
+.lista-legal { margin: 8px 0; padding-left: 20px; }
 /* Campo de contraseña con botón de ojo (ui.js → activarVerContrasena) */
 .campo-clave { position: relative; display: block; }
 .campo-clave input { width: 100%; padding-right: 48px; }
